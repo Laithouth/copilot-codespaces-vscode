@@ -30,7 +30,7 @@ const edu = mk('edu@a11y.test', 'educator');
 const stu = mk('stu@a11y.test', 'student');
 const course = Number(db.prepare(`INSERT INTO courses (institution_id, code, title) VALUES (?, 'A11Y1', 'Accessibility course')`).run(instId).lastInsertRowid);
 db.prepare(`INSERT INTO course_members VALUES (?, ?, 'educator'), (?, ?, 'student')`).run(course, edu, course, stu);
-const slugs = ['checking-claims-and-sources', 'choosing-suitable-tasks', 'defining-a-useful-request', 'working-with-numbers'];
+const slugs = ['checking-claims-and-sources', 'choosing-suitable-tasks', 'defining-a-useful-request', 'working-with-numbers', 'examples-and-structured-outputs', 'research-and-communication', 'responsible-workflows', 'independent-application'];
 const assignmentIds = slugs.map((slug) => Number(db.prepare(`INSERT INTO assignments (course_id, lesson_slug, title, ai_policy, mode, solution_visibility, competencies) VALUES (?, ?, ?, 'limited', 'practice', 'after_submit', '["verification"]')`).run(course, slug, `A11y ${slug}`).lastInsertRowid));
 
 const server = createServer(createApp(db));

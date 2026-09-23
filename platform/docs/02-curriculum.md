@@ -6,12 +6,12 @@
 |---|---|---|---|---|---|
 | 1 | Understanding AI and choosing suitable tasks | 60–75 min | **Built** | Task suitability decision with explanation | Tool selection, Responsible use |
 | 2 | Defining a useful request | 75–90 min | **Built** | Task brief, initial prompt, evaluation, one revision, judgement | Task definition, Instruction quality, Revision |
-| 3 | Examples and structured outputs | 60–90 min | Specified | Checked structured result from a supplied source | Instruction quality, Verification |
+| 3 | Examples and structured outputs | 60–90 min | **Built** | Checked structured result from a supplied source | Instruction quality, Verification |
 | 4 | Checking claims and sources | 60–90 min | **Built** (also the public sample) | Annotated answer, corrected answer, uncertainty statement | Verification, Revision, Responsible use |
 | 5 | Working with numbers and code | 60–90 min | **Built** | Definition, handling of the missing value, figures, an independent check, and a recommendation with limitations | Task definition, Verification, Responsible use |
-| 6 | Research and communication | 60–90 min | Specified | Short evidence-based brief | Instruction quality, Verification |
-| 7 | Responsible workflows | 60–75 min | Specified | Revised workflow with disclosure | Responsible use, Tool selection |
-| 8 | Independent application | 90–120 min | Specified | Final work, prompts, checks, revisions, explanation | All six |
+| 6 | Research and communication | 60–90 min | **Built** | Short evidence-based brief | Instruction quality, Verification |
+| 7 | Responsible workflows | 60–75 min | **Built** | Revised workflow with disclosure | Responsible use, Tool selection |
+| 8 | Independent application | 90–120 min | **Built** | Final work, prompts, checks, revisions, explanation | All six |
 
 Total: 8.5 hours (lower estimates) to 12 hours (upper estimates).
 
@@ -19,7 +19,7 @@ Total: 8.5 hours (lower estimates) to 12 hours (upper estimates).
 
 **Principles, not product tricks.** Lessons teach decisions that transfer between tools: when to use AI, how to brief it, how to check it, how to revise and how to disclose. Tool-specific guidance is dated (content reviewed September 2026) and reviewed when capabilities change. Model comparison is taught with task and materials held constant, the model and settings recorded, and repeated trials where feasible. One good output is not proof that a prompt is reliably better.
 
-**Source of truth.** For built modules, the complete lesson content (lesson text, worked example, materials, hints, example responses, common mistakes, accessibility alternative, instructor notes) is in [`src/content/lessons.js`](../src/content/lessons.js) and is rendered on the site. Module metadata is in [`src/content/curriculum.js`](../src/content/curriculum.js). This document summarises the built modules and fully specifies the others.
+**Source of truth.** All eight modules are built. The complete lesson content (lesson text, worked example, materials, hints, example responses, common mistakes, accessibility alternative, instructor notes) is in [`src/content/lessons.js`](../src/content/lessons.js) (Modules 1, 2, 4, 5) and [`src/content/lessons-more.js`](../src/content/lessons-more.js) (Modules 3, 6, 7, 8), and is rendered on the site. Module metadata is in [`src/content/curriculum.js`](../src/content/curriculum.js). The specifications below match the built lessons; where a detail differs, the source files are authoritative (for example, Module 3 uses one supply agreement plus a short independent contract, and Module 8's default task is a costing recommendation for the Module 2 bakery).
 
 ---
 
@@ -40,7 +40,7 @@ Total: 8.5 hours (lower estimates) to 12 hours (upper estimates).
 - **Supplied materials:** P1 business profile, P2 owner's notes, P3 tutor's marking guidance (all fictional).
 - **Assessment:** brief completeness and checkable success criteria (*Task definition*); constraints and inputs carried into the prompt, not length (*Instruction quality*); a targeted change with an evidence-based judgement (*Revision*).
 
-## Module 3. Examples and structured outputs (specified)
+## Module 3. Examples and structured outputs (built)
 
 - **Outcomes:** use examples to show the expected form; separate instructions from supplied documents; specify tables and formats; check extracted values against the source.
 - **Lesson:** why examples shape format more than wording does; delimiting documents (for example, tags or headed sections) so instructions and data aren't confused; asking for a fixed table schema; why every extracted cell still needs checking.
@@ -73,7 +73,7 @@ Total: 8.5 hours (lower estimates) to 12 hours (upper estimates).
 - **Assessment:** any of the three definitions is accepted if it is stated and justified and the figures match it (±1% for revenue, ±0.6 points for growth). The checks flag, in priority order: blank counted as zero (caps verification at 0); missing value not found; leaving the quarter out; no definition or reason; wrong figures; top region inconsistent with the definition; no or wrong independent recalculation; returns missed; estimate not disclosed; no limitations; over 150 words. Provisional levels for *Task definition* and *Verification*; the educator judges *Responsible use*.
 - **Example response, common mistakes, accessibility alternative, instructor notes:** in `lessons.js` and on the educator's view.
 
-## Module 6. Research and communication (specified)
+## Module 6. Research and communication (built)
 
 - **Outcomes:** compare and summarise sources faithfully; adapt to an audience without changing what the evidence supports; separate evidence from interpretation.
 - **Lesson:** summarisation drift (hedges lost, numbers rounded into different claims); audience adaptation vs. distortion; marking interpretation explicitly.
@@ -87,7 +87,7 @@ Total: 8.5 hours (lower estimates) to 12 hours (upper estimates).
 - **Accessibility alternative:** audio-friendly plain-text sources; the brief can be delivered as a recorded two-minute explanation.
 - **Instructor notes:** ask students to highlight each sentence as evidence or interpretation; it makes drift visible quickly.
 
-## Module 7. Responsible workflows (specified)
+## Module 7. Responsible workflows (built)
 
 - **Outcomes:** decide what information may go to which tool under course and institution rules; check outputs for bias and misrepresentation relevant to the task; write an accurate disclosure.
 - **Lesson:** data categories (public, own work, others' personal data, confidential, assessed work of others); approved tools; ownership and attribution; bias checks tied to the task; disclosure that someone could audit against the record.
@@ -101,7 +101,7 @@ Total: 8.5 hours (lower estimates) to 12 hours (upper estimates).
 - **Accessibility alternative:** workflows as numbered text steps; disclosure can be completed from a template.
 - **Instructor notes:** connect to your institution's actual policy; the platform shows the institution's data rule on every workspace.
 
-## Module 8. Independent application (specified)
+## Module 8. Independent application (built)
 
 - **Outcomes:** complete an unfamiliar task with approved tools and reduced coaching; show prompts, checks and revisions; explain decisions concisely.
 - **Lesson:** a one-page recap of the method; no worked example of the specific task.

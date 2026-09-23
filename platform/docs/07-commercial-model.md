@@ -58,7 +58,7 @@ At the list price for the default model setting (`claude-opus-5`, US$5 per milli
 | Typical (assumed) | 700 tokens | 600 tokens | ≈ US$0.019 |
 | Worst case (output cap reached) | 700 tokens | 2,000 tokens | ≈ US$0.054 |
 
-With the four built modules, a learner might make roughly 4–11 runs (two in Module 2 and one to three each in Modules 4 and 5, plus retries). The Module 5 prompt with the dataset attached is shorter than Module 4's, so the same per-run estimate is used. That is roughly **US$0.08–0.59 per learner** in inference at list price. These are planning figures only; the institution can choose a cheaper model through the "Approved model" setting, and actual costs come from the `model_runs` table.
+With all eight modules, a learner might make roughly 8–20 runs across the course (about one to three in each module that has a live AI step, plus retries; Module 7 has none). Prompts with attached documents are of similar size to Module 4's, so the same per-run estimate is used. That is roughly **US$0.15–1.08 per learner** in inference at list price. These are planning figures only; the institution can choose a cheaper model through the "Approved model" setting, and actual costs come from the `model_runs` table.
 
 Hosting, support, maintenance and onboarding are **not estimated here**. They depend on the hosting choice and staffing, and must be filled in from real quotes before pricing.
 

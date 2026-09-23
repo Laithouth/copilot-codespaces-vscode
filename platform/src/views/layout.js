@@ -1,7 +1,10 @@
 import { html, raw } from '../html.js';
 
-export const PRODUCT = 'Practicum';
-export const PRODUCT_NOTE = 'Practicum is a working name.';
+// Brand name is configurable (BRAND_NAME) so the platform can be licensed and
+// run under a customer's own name. Guarded so this module also runs in a browser.
+const env = globalThis.process?.env || {};
+export const PRODUCT = env.BRAND_NAME || 'Practicum';
+export const PRODUCT_NOTE = env.BRAND_NAME ? '' : 'Practicum is a working name.';
 
 const NAV = [
   ['/how-it-works', 'How it works'],
@@ -29,7 +32,7 @@ export function page({ title, description = '', body, user = null, path = '', ap
 <a class="skip" href="#main">Skip to main content</a>
 <header class="site-header">
   <div class="wrap header-row">
-    <a class="brand" href="${app ? '/app' : '/'}"><span class="brand-mark" aria-hidden="true">P</span> ${PRODUCT}</a>
+    <a class="brand" href="${app ? '/app' : '/'}"><span class="brand-mark" aria-hidden="true">${PRODUCT.charAt(0).toUpperCase()}</span> ${PRODUCT}</a>
     ${nav}
   </div>
 </header>

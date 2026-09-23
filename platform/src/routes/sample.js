@@ -49,19 +49,23 @@ function render(ctx, { response = {}, hints = 0, version = 1, result = null, pre
   return page({ title: 'Sample lesson', description: 'Check an AI-written answer against sources: a free sample lesson.', body, user: ctx.user, path: '/try' });
 }
 
+// Pure: body fields in, full page HTML out. Used by the route below and by the
+// static prototype, which runs this same code in the browser.
+export function samplePage(ctx, b = null) {
+  if (!b) return render(ctx, {});
+  const response = parseResponse(lesson, b);
+  const version = Math.max(1, Math.min(50, parseInt(b.version, 10) || 1));
+  let hints = Math.max(0, Math.min(lesson.hints.length, parseInt(b.hints, 10) || 0));
+  const prevCodes = String(b.prev_codes || '').split(',').filter(Boolean).slice(0, 20);
+  if (b.action === 'hint') {
+    hints = Math.min(lesson.hints.length, hints + 1);
+    return render(ctx, { response, hints, version, prevCodes });
+  }
+  const result = evaluate(lesson, response, { hintsUsed: hints, versionNo: version, previousIssueCodes: prevCodes });
+  return render(ctx, { response, hints, version, result });
+}
+
 export function registerSample(router) {
-  router.get('/try', (ctx) => ctx.html(render(ctx, {})));
-  router.post('/try', (ctx) => {
-    const b = ctx.body;
-    const response = parseResponse(lesson, b);
-    const version = Math.max(1, Math.min(50, parseInt(b.version, 10) || 1));
-    let hints = Math.max(0, Math.min(lesson.hints.length, parseInt(b.hints, 10) || 0));
-    const prevCodes = String(b.prev_codes || '').split(',').filter(Boolean).slice(0, 20);
-    if (b.action === 'hint') {
-      hints = Math.min(lesson.hints.length, hints + 1);
-      return ctx.html(render(ctx, { response, hints, version, prevCodes }));
-    }
-    const result = evaluate(lesson, response, { hintsUsed: hints, versionNo: version, previousIssueCodes: prevCodes });
-    return ctx.html(render(ctx, { response, hints, version, result }));
-  });
+  router.get('/try', (ctx) => ctx.html(samplePage(ctx)));
+  router.post('/try', (ctx) => ctx.html(samplePage(ctx, ctx.body)));
 }

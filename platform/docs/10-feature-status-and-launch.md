@@ -10,16 +10,20 @@ The live feature list is at `/status`, generated from [`src/content/features.js`
 - **Public sample lesson** (Module 4) end to end: hints, provisional feedback, revision with resolved-issue tracking, example answer after first attempt; nothing stored.
 - Accounts via invitation links, sign-in with rate limiting, sessions, CSRF protection, security headers.
 - Roles and tenant isolation: student, educator, institution administrator, platform administrator.
-- Modules 1, 2, 4 and 5 as assignable lessons, with per-assignment AI rule, mode, deadline, example visibility and criteria.
+- All eight modules as assignable lessons, with per-assignment AI rule, mode, deadline, example visibility and criteria.
 - Student workspace: saved drafts, hints (practice only), required disclosure, submissions, immutable versions, revisions, deadline enforcement, "what is saved" notice.
 - Live AI step through a replaceable adapter (Anthropic), with refusal fallback, requested and served model recorded, honest "unavailable" message without credentials, monthly limit with alert, and recording of output from other approved tools.
 - Provisional rule-based feedback (at most two issues) and provisional levels; educator approve, edit or withhold; educator feedback; confirmed levels with required override reasons; student challenges.
 - Progress by demonstrated competency (confirmed levels only; provisional shown separately).
 - Course report CSV; institution report CSV with small-number suppression; student portfolio export (HTML).
 - Institution settings, course creation, learner deletion with confirmation, retention job, audit log.
-- Accessibility: axe-core WCAG A/AA checks pass on 112 page states (light and dark mode, 1280 px and 320 px); no horizontal scrolling at 320 px; keyboard-only completion of the sample lesson.
+- Accessibility: axe-core WCAG A/AA checks pass on 128 page states (light and dark mode, 1280 px and 320 px); no horizontal scrolling at 320 px; keyboard-only completion of the sample lesson.
+
+- Clickable prototype export (`npm run export:prototype`) and release bundle (`npm run package`); `BRAND_NAME` for white-labelling.
 
 ## Built with limited testing
+
+- Docker image: Dockerfile written, but the image could not be built in the build environment (Docker Hub rate limit). Build it once before relying on it.
 
 - Speech input (browser Web Speech API; off by default). Not tested with real speech in this environment.
 - Cohort skill gaps page (checked for no names; content not validated with educators).
@@ -37,13 +41,13 @@ The live feature list is at `/status`, generated from [`src/content/features.js`
 7. **Accessibility**: screen-reader testing (NVDA, JAWS, VoiceOver) of the sample lesson and workspace; an accessibility statement with the tested scope.
 8. **Rubric calibration** with pilot educators before any level informs a grade.
 9. **Invitation delivery**: either email, or a documented process for educators sharing links securely.
-10. **Content review** of Modules 1, 2, 4 and 5 by at least one subject educator; confirm the UNESCO competency names against the official document.
+10. **Content review** of all eight modules by at least one subject educator; confirm the UNESCO competency names against the official document.
 11. **Evidence register**: re-read full texts for E1–E5 before quoting any figure not already on the site; confirm the EU AI Act text on EUR-Lex.
 12. **Operational**: error monitoring, uptime checks, a support contact route, and an incident process.
 
 ## Later improvements (driven by pilot evidence and buyer needs)
 
-- Build Modules 3, 6, 7 and 8; the delayed transfer check as a scheduled activity.
+- The delayed transfer check as a scheduled activity; discipline-specific task templates for Module 8.
 - Educator editing of lesson materials and rubrics; discipline templates for Module 8.
 - Institutional single sign-on (SAML or OIDC).
 - LMS integration: LTI 1.3 launch, then LTI Advantage (Deep Linking for activity selection, Names and Role Provisioning for rosters, Assignment and Grade Services for instructor-approved grade return), tested with a named LMS.

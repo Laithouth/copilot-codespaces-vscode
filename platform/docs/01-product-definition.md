@@ -67,6 +67,7 @@ These are planning assumptions to be tested, not facts.
 ## Scope changes from the brief, and why
 
 - **Repository.** The repository contained a GitHub Copilot tutorial template, not a website. The platform is built in `platform/` and the original template is left untouched.
-- **Four modules built (1, 2, 4 and 5), not a full course.** The first release built three (as the brief asked), with Module 4 as the public end-to-end demonstration. Module 5, the business-analysis demonstration, was added next. The prompt-improvement demonstration is built as the Module 2 lesson.
+- **All eight modules built (content version 0.1).** The first release built three, as the brief asked, with Module 4 as the public end-to-end demonstration; the rest followed. Every module still needs review by subject educators and testing in a pilot.
+- **Clickable prototype and release packaging** were added so the product can be shown and handed over without running a server (see [12-deployment-and-export.md](12-deployment-and-export.md)).
 - **No live AI grading.** Provisional feedback is deterministic and rule-based. It is cheaper, testable and cannot invent feedback. AI-generated formative feedback can be added later behind the same educator review.
 - **No email.** Invitation links are shown to the educator or administrator to share. Automatic email is planned.

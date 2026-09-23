@@ -198,3 +198,11 @@ test('deadline: past-due drafts cannot be submitted', async () => {
   assert.match(r.text, /deadline has passed/);
   assert.equal(db.prepare('SELECT COUNT(*) AS n FROM attempts WHERE assignment_id = ?').get(aid).n, 0);
 });
+
+test('read-only versions keep their own answers when several are on one page', async () => {
+  const { lessonFields } = await import('../src/views/lesson.js');
+  const { LESSONS } = await import('../src/content/lessons.js');
+  const out = String(lessonFields(LESSONS['checking-claims-and-sources'], { verdicts: { C1: { verdict: 'supported' } } }, { readOnly: true }));
+  assert.match(out, /value="supported" checked disabled/);
+  assert.doesNotMatch(out, / name="/);
+});

@@ -76,7 +76,14 @@ const val = (o, k) => (o && o[k]) || '';
 const checked = (a, b) => (a === b ? raw(' checked') : '');
 
 // Form fields for the student's own work. `response` pre-fills a saved draft.
+// Read-only copies drop field names: several versions on one page would
+// otherwise share radio groups, and the browser keeps only one choice checked.
 export function lessonFields(lesson, response = {}, { readOnly = false } = {}) {
+  const out = html`${lessonFieldsInner(lesson, response, { readOnly })}`;
+  return readOnly ? raw(String(out).replace(/ name="[^"]*"/g, '')) : out;
+}
+
+function lessonFieldsInner(lesson, response = {}, { readOnly = false } = {}) {
   const dis = readOnly ? raw(' disabled') : '';
   if (lesson.form) return formFields(lesson, response, dis);
   if (lesson.type === 'evidence') {
