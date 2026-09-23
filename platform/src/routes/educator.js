@@ -1,5 +1,6 @@
 import { html, raw, paras } from '../html.js';
 import { page, chip, csrfField } from '../views/layout.js';
+import { icon } from '../views/icons.js';
 import { requireUser, requireCourseEducator, requireAssignment, requireStudentInCourse } from '../access.js';
 import { LESSONS } from '../content/lessons.js';
 import { COMPETENCIES, LEVELS, levelLabel, competencyByCode, RUBRIC_STATUS } from '../content/competencies.js';
@@ -63,11 +64,16 @@ function coursePage(ctx, extra = '') {
   const openChallenges = db.prepare(`SELECT COUNT(*) AS n FROM challenges ch JOIN assignments a ON a.id = ch.assignment_id WHERE a.course_id = ? AND ch.status = 'open'`).get(course.id).n;
 
   const body = html`<section class="wrap section">
-    <p><a href="/app">Dashboard</a></p>
-    <h1>${course.code}: ${course.title}</h1>
+    <div class="page-head"><div><p class="eyebrow"><a href="/app">Dashboard</a> / Course</p><h1>${course.code}: ${course.title}</h1></div>
+      <div class="actions"><a class="button secondary" href="/app/courses/${course.id}/gaps">${icon('chart')} Cohort skill gaps</a><a class="button secondary" href="/app/courses/${course.id}/report.csv">${icon('download')} Export course report (CSV)</a></div></div>
     ${extra}
+    <div class="stats">
+      <div class="stat"><p class="stat-label">Students</p><p class="stat-value">${students.length}</p></div>
+      <div class="stat"><p class="stat-label">Assignments</p><p class="stat-value">${assignments.length}</p></div>
+      <div class="stat"><p class="stat-label">Students with a submission</p><p class="stat-value">${ctx.db.prepare(`SELECT COUNT(DISTINCT at.student_id) AS n FROM attempts at JOIN assignments a ON a.id = at.assignment_id WHERE a.course_id = ? AND at.status = 'submitted'`).get(course.id).n} <small>of ${students.length}</small></p></div>
+      <div class="stat"><p class="stat-label">Open challenges</p><p class="stat-value">${openChallenges}</p></div>
+    </div>
     ${openChallenges ? html`<p class="note"><strong>${openChallenges} open student challenge${openChallenges > 1 ? 's' : ''}.</strong> They appear on each student's review page.</p>` : ''}
-    <div class="actions"><a class="button secondary" href="/app/courses/${course.id}/gaps">Cohort skill gaps</a><a class="button secondary" href="/app/courses/${course.id}/report.csv">Export course report (CSV)</a></div>
 
     <h2>Assignments</h2>
     ${assignments.length ? html`<div class="table-wrap" tabindex="0" role="region" aria-label="Table, scrolls sideways on small screens"><table><thead><tr><th scope="col">Assignment</th><th scope="col">Lesson</th><th scope="col">AI rule</th><th scope="col">Mode</th><th scope="col">Due</th><th scope="col">Submitted</th></tr></thead>

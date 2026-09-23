@@ -1,7 +1,7 @@
 // Progressive enhancement only: every page works without this script.
 (function () {
   // Show the navigation expanded on wide screens.
-  var menus = document.querySelectorAll('.main-nav details.menu');
+  var menus = document.querySelectorAll('.main-nav details.menu, details.side-menu');
   var wide = window.matchMedia('(min-width: 64rem)');
   function sync() { menus.forEach(function (m) { m.open = wide.matches; }); }
   sync();

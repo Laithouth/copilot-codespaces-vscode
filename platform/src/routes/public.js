@@ -10,6 +10,7 @@ import { EVIDENCE, POLICY, STATUS, REVIEW_DATE } from '../content/evidence.js';
 import { FEATURES, FEATURE_STATUS } from '../content/features.js';
 import { lessonIntro, materials, aiAnswer, exampleBlock } from '../views/lesson.js';
 import { notFound } from '../http.js';
+import { icon } from '../views/icons.js';
 
 const statusChip = (key) => chip(FEATURE_STATUS[key].label, FEATURE_STATUS[key].kind);
 const moduleChip = (m) => chip(MODULE_STATUS[m.status].label, m.status === 'available' ? 'good' : '');
@@ -24,57 +25,99 @@ const PRIMARY_CTAS = html`<div class="actions">
 function home(ctx) {
   const c5 = LESSONS['checking-claims-and-sources'].claims.find((c) => c.key === 'C5');
   const body = html`
-  <section class="hero"><div class="wrap">
-    <h1>Learn to use AI effectively for real academic and professional tasks</h1>
-    <p class="lead">Students practise realistic assignments, check what AI gives them and get feedback linked to clear learning objectives. Educators see the decisions behind each piece of work and track evidence of what each student can do.</p>
-    ${PRIMARY_CTAS}
+  <section class="hero"><div class="wrap hero-grid">
+    <div>
+      <span class="kicker">${icon('spark')} AI skills course for universities</span>
+      <h1>Learn to use AI effectively for real academic and professional tasks</h1>
+      <p class="lead">Students practise realistic assignments, check what AI gives them and get feedback linked to clear learning objectives. Educators see the decisions behind each piece of work and track evidence of what each student can do.</p>
+      <div class="actions">
+        <a class="button large" href="/try">Try a sample lesson ${icon('arrow')}</a>
+        <a class="button secondary large" href="/curriculum">View the curriculum</a>
+      </div>
+      <ul class="hero-points">
+        <li>${icon('check')} Eight practical modules</li>
+        <li>${icon('check')} Feedback students can act on</li>
+        <li>${icon('check')} Evidence educators can review</li>
+      </ul>
+      <p class="small muted">Buying for a department? <a href="/contact">Request an institutional pilot</a>.</p>
+    </div>
+    <figure class="preview">
+      <div class="preview-window" aria-hidden="true">
+        <div class="preview-bar"><i></i><i></i><i></i><span>Module 4 · Checking claims and sources</span></div>
+        <div class="preview-body">
+          <div class="preview-claim"><span class="label-tag">Claim C5</span>
+            <p class="claim-text">${c5.text}</p>
+            <div class="preview-options"><span>Supported</span><span>Not in the sources</span><span class="on">Reference could not be verified</span></div>
+          </div>
+          <div class="preview-feedback"><span class="chip good">Resolved since last version</span>
+            <p><strong>Good revision.</strong> You removed the invented study and its 20% figure, and added the cost from Source C.</p>
+          </div>
+          <div class="skill"><span class="skill-name">Verification</span><span class="meter"><span class="on"></span><span class="on"></span><span></span></span><span class="skill-level">Limited support</span></div>
+        </div>
+      </div>
+      <figcaption>The lesson workspace: students check claims, get feedback and build evidence of skill.</figcaption>
+    </figure>
   </div></section>
 
   <section class="wrap section">
-    <h2>What students learn to do</h2>
-    <p>The course teaches a method that transfers between tools, not tricks for one product.</p>
-    <ol class="steps">
-      <li><strong>Define the task.</strong> Objective, audience, materials, constraints and what success looks like.</li>
-      <li><strong>Choose an appropriate tool</strong>, or decide AI is the wrong method for this task.</li>
-      <li><strong>Give useful instructions</strong> that carry the task's context and limits.</li>
-      <li><strong>Evaluate the result</strong>: check claims, sources, numbers and omissions.</li>
-      <li><strong>Improve the approach</strong> one change at a time, and judge whether it helped.</li>
-      <li><strong>Explain their own contribution</strong> and disclose AI use under the assignment's rules.</li>
-    </ol>
-  </section>
-
-  <section class="wrap section" aria-labelledby="sample-h">
-    <h2 id="sample-h">A two-minute sample activity</h2>
-    <div class="card">
-      <p>An AI assistant wrote this sentence in an answer about whether a (fictional) town library should open on Sundays:</p>
-      <p class="ai-output">${c5.text}</p>
-      <p><strong>Would you put this sentence in a report to a council committee?</strong></p>
-      <details class="disclosure"><summary>What a careful checker does</summary>
-        <p>They look for the reference. It is not among the supplied sources, and they cannot find it anywhere else. It was invented for the exercise. A careful checker removes the reference and the 20% figure that depends on it, and says so. The full lesson has five more claims, three sources and a corrected answer to write.</p>
-      </details>
-      <div class="actions"><a class="button" href="/try">Try the full sample lesson</a><span class="muted small">About 30–45 minutes. No account needed, and nothing you type is saved.</span></div>
+    <div class="section-head">
+      <p class="eyebrow">The method</p>
+      <h2>What students learn to do</h2>
+      <p class="muted">The course teaches a method that transfers between tools, not tricks for one product.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature"><span class="feature-icon">${icon('pen')}</span><h3>Define the task</h3><p>Objective, audience, materials, constraints and what success looks like.</p></div>
+      <div class="feature"><span class="feature-icon">${icon('layers')}</span><h3>Choose an appropriate tool</h3><p>Or decide that AI is the wrong method for this task.</p></div>
+      <div class="feature"><span class="feature-icon">${icon('spark')}</span><h3>Give useful instructions</h3><p>Instructions that carry the task's context and limits.</p></div>
+      <div class="feature"><span class="feature-icon">${icon('search')}</span><h3>Evaluate the result</h3><p>Check claims, sources, numbers and omissions.</p></div>
+      <div class="feature"><span class="feature-icon">${icon('chart')}</span><h3>Improve the approach</h3><p>One change at a time, and judge whether it helped.</p></div>
+      <div class="feature"><span class="feature-icon">${icon('shield')}</span><h3>Explain their contribution</h3><p>And disclose AI use under the assignment's rules.</p></div>
     </div>
   </section>
 
+  <section class="band" aria-labelledby="sample-h"><div class="wrap section">
+    <div class="grid two">
+      <div>
+        <p class="eyebrow">Two-minute sample</p>
+        <h2 id="sample-h">Would you put this sentence in a report?</h2>
+        <p class="muted">An AI assistant wrote it in an answer about whether a (fictional) town library should open on Sundays.</p>
+        <p class="ai-output">${c5.text}</p>
+      </div>
+      <div class="card">
+        <h3>What a careful checker does</h3>
+        <p>They look for the reference. It is not among the supplied sources, and they cannot find it anywhere else. It was invented for the exercise. A careful checker removes the reference and the 20% figure that depends on it, and says so.</p>
+        <p class="muted small">The full lesson has five more claims, three sources and a corrected answer to write. About 30–45 minutes. No account needed, and nothing you type is saved.</p>
+        <div class="actions"><a class="button" href="/try">Try the full sample lesson ${icon('arrow')}</a></div>
+      </div>
+    </div>
+  </div></section>
+
   <section class="wrap section">
-    <h2>Who it is for</h2>
-    <div class="grid">
-      <div class="card"><h3>Students</h3><p>Aged 18 and over, including beginners with no technical background. Practise with realistic business and academic tasks, get specific feedback, and keep a portfolio that shows your work, the AI's output and your checks separately.</p><p><a href="/how-it-works">How the practice works</a></p></div>
-      <div class="card"><h3>Educators</h3><p>Embed a short AI skills course in an existing subject. Set the AI rules for each assignment, see students' prompts, checks and revisions, review provisional feedback and confirm rubric levels.</p><p><a href="/resources">Teaching resources</a></p></div>
-      <div class="card"><h3>Institutions</h3><p>A consistent approach across courses, with approved AI providers, usage limits, retention settings and reports built on demonstrated skill rather than time spent.</p><p><a href="/institutions">For institutions</a></p></div>
+    <div class="section-head"><p class="eyebrow">Who it is for</p><h2>Built for the whole course team</h2></div>
+    <div class="feature-grid">
+      <div class="feature"><span class="feature-icon">${icon('book')}</span><h3>Students</h3><p>Aged 18 and over, including beginners with no technical background. Practise with realistic business and academic tasks, get specific feedback, and keep a portfolio that shows your work, the AI's output and your checks separately.</p><p><a href="/how-it-works">How the practice works</a></p></div>
+      <div class="feature"><span class="feature-icon">${icon('users')}</span><h3>Educators</h3><p>Embed a short AI skills course in an existing subject. Set the AI rules for each assignment, see students' prompts, checks and revisions, review provisional feedback and confirm rubric levels.</p><p><a href="/resources">Teaching resources</a></p></div>
+      <div class="feature"><span class="feature-icon">${icon('shield')}</span><h3>Institutions</h3><p>A consistent approach across courses, with approved AI providers, usage limits, retention settings and reports built on demonstrated skill rather than time spent.</p><p><a href="/institutions">For institutions</a></p></div>
     </div>
   </section>
 
-  <section class="wrap section">
-    <h2>The problem we are working on</h2>
-    <p>Many students now have access to AI tools. Access is not the same as a reliable method. Students can find it hard to judge which tasks suit AI, to give the context a task needs, to spot errors and invented sources, to protect other people's information and to follow each course's rules. Not every student or course has the same difficulties, and some students are already skilled.</p>
-    <p>Educators need practical materials and a way to see students' decisions, not only final text. Institutions need an approach they can deliver consistently and update as tools change.</p>
-    <p>Our goal is useful AI-assisted work, with the understanding and judgement to handle unfamiliar tasks. Completing one task with AI and learning a transferable skill are different things, and the course is designed to tell them apart.</p>
-  </section>
+  <section class="band"><div class="wrap section grid two">
+    <div><p class="eyebrow">The problem</p><h2>Access to AI is not the same as a reliable method</h2></div>
+    <div>
+      <p>Many students now have access to AI tools. They can still find it hard to judge which tasks suit AI, to give the context a task needs, to spot errors and invented sources, to protect other people's information and to follow each course's rules. Not every student or course has the same difficulties, and some students are already skilled.</p>
+      <p>Educators need practical materials and a way to see students' decisions, not only final text. Institutions need an approach they can deliver consistently and update as tools change.</p>
+      <p>Our goal is useful AI-assisted work, with the understanding and judgement to handle unfamiliar tasks. Completing one task with AI and learning a transferable skill are different things, and the course is designed to tell them apart.</p>
+    </div>
+  </div></section>
 
   <section class="wrap section">
-    <div class="note"><p><strong>What we can't tell you yet.</strong> ${PRODUCT} has not yet been piloted with students, so we have no results to report. We are looking for a first department to run a pilot with a published evaluation. <a href="/research">How we will evaluate learning</a>.</p></div>
-    ${PRIMARY_CTAS}
+    <div class="card cta">
+      <div>
+        <h2>Run a pilot with your department</h2>
+        <p class="muted">${PRODUCT} has not yet been piloted with students, so we have no results to report. We are looking for a first department to run a pilot with a published evaluation. <a href="/research">How we will evaluate learning</a>.</p>
+      </div>
+      ${PRIMARY_CTAS}
+    </div>
   </section>`;
   return page({ title: '', description: 'AI skills practice and assessment for university courses.', body, user: ctx.user, path: '/' });
 }

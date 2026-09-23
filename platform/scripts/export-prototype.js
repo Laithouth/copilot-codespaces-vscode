@@ -7,7 +7,7 @@
 //
 // Usage: npm run export:prototype   → dist/prototype/ and dist/prototype.zip
 import { createServer } from 'node:http';
-import { mkdirSync, rmSync, writeFileSync, copyFileSync, readdirSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync, cpSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
@@ -87,7 +87,7 @@ function rewrite(text, role) {
     .replace(/(href|src)="\/static\/([^"]+)"/g, '$1="assets/$2"')
     .replace(/href="(\/[^"]*)"/g, (_, h) => `href="${target(h)}"`)
     .replace(/name="_csrf" value="[^"]*"/g, 'name="_csrf" value=""')
-    .replace('<body>', `<body data-proto-role="${role.key}">\n${bar(role)}`)
+    .replace(/<body([^>]*)>/, (_, attrs) => `<body${attrs} data-proto-role="${role.key}">\n${bar(role)}`)
     .replace('</body>', `${text.includes('action="/try') ? '<script src="assets/sample-live.js"></script>\n' : ''}<script src="assets/prototype.js"></script>\n</body>`);
 }
 
@@ -154,7 +154,7 @@ const overview = page({
 writeFileSync(join(OUT, 'index.html'), rewrite(String(overview), ROLES[0]).replace(/<title>[^<]*<\/title>/, `<title>${PRODUCT} Prototype</title>`));
 
 // ---- Assets: styles, the site script, the prototype script and the modules the live sample lesson needs ----
-for (const f of readdirSync(join(ROOT, 'public'))) copyFileSync(join(ROOT, 'public', f), join(OUT, 'assets', f));
+cpSync(join(ROOT, 'public'), join(OUT, 'assets'), { recursive: true });
 // Bundle the sample lesson (the same lesson and feedback code the server uses)
 // into one classic script, so it also works when the files are opened from disk.
 execFileSync(join(ROOT, 'node_modules', '.bin', 'esbuild'), [join(ROOT, 'src', 'routes', 'sample.js'), '--bundle', '--format=iife', '--global-name=PrototypeSample', '--minify', `--outfile=${join(OUT, 'assets', 'sample-live.js')}`, '--log-level=warning']);
@@ -210,13 +210,18 @@ document.addEventListener('submit', (e) => {
   say('Prototype: saving is switched off. In the real product this would ' + what + '.');
 });
 `);
-writeFileSync(join(OUT, 'assets', 'prototype.css'), `.proto-bar { background: var(--text); color: var(--bg); font-size: 0.9rem; }
-.proto-bar a { color: var(--bg); }
-.proto-bar a[aria-current="page"] { font-weight: 700; }
-.proto-bar .muted { color: inherit; opacity: 0.8; }
-.proto-row { display: flex; flex-wrap: wrap; gap: 0.3rem 1.2rem; justify-content: space-between; padding-top: 0.4rem; padding-bottom: 0.4rem; }
-.proto-roles { display: flex; flex-wrap: wrap; gap: 0.2rem 0.9rem; }
-.proto-toast { margin: 0; padding: 0.5rem 1rem; background: var(--accent); color: var(--accent-text); text-align: center; }
+writeFileSync(join(OUT, 'assets', 'prototype.css'), `.proto-bar { background: var(--text); color: var(--bg); font-size: 0.85rem; }
+.proto-bar a { color: var(--bg); text-decoration: none; }
+.proto-bar a:hover { text-decoration: underline; }
+.proto-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 1.2rem; justify-content: space-between; padding-top: 0.45rem; padding-bottom: 0.45rem; }
+.proto-row > span a { text-decoration: underline; }
+.proto-roles { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; }
+.proto-roles .muted { color: inherit; opacity: 0.7; margin-right: 0.25rem; }
+.proto-roles a { padding: 0.15rem 0.65rem; border-radius: 999px; border: 1px solid transparent; }
+.proto-roles a:hover { border-color: currentColor; text-decoration: none; }
+.proto-roles a[aria-current="page"] { background: var(--bg); color: var(--text); font-weight: 700; }
+@media (max-width: 40rem) { .proto-roles { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; padding-bottom: 0.2rem; } .proto-roles a { white-space: nowrap; } }
+.proto-toast { margin: 0; padding: 0.55rem 1rem; background: var(--accent); color: var(--accent-text); text-align: center; font-weight: 600; }
 `);
 for (const f of readdirSync(OUT).filter((f) => f.endsWith('.html'))) {
   const p = join(OUT, f);

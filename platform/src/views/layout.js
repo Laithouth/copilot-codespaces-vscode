@@ -1,4 +1,5 @@
 import { html, raw } from '../html.js';
+import { icon } from './icons.js';
 
 // Brand name is configurable (BRAND_NAME) so the platform can be licensed and
 // run under a customer's own name. Guarded so this module also runs in a browser.
@@ -9,16 +10,25 @@ export const PRODUCT_NOTE = env.BRAND_NAME ? '' : 'Practicum is a working name.'
 const NAV = [
   ['/how-it-works', 'How it works'],
   ['/curriculum', 'Curriculum'],
-  ['/institutions', 'For institutions'],
+  ['/institutions', 'Institutions'],
   ['/research', 'Research'],
-  ['/plans', 'Plans & pilot'],
-  ['/trust', 'Trust & accessibility'],
-  ['/resources', 'Resources & FAQ'],
+  ['/plans', 'Plans'],
+  ['/trust', 'Trust'],
+  ['/resources', 'Resources'],
 ];
 
-export function page({ title, description = '', body, user = null, path = '', app = false, flash = '', csrf = '' }) {
-  const nav = app ? appNav(user, path, csrf) : publicNav(path, user);
-  return html`<!doctype html>
+// Default workspace navigation; pages can add items (for example, a student's
+// portfolio export) through `sideNav`.
+const APP_NAV = [
+  ['/app', 'Dashboard', 'home'],
+  ['/curriculum', 'Curriculum', 'book'],
+  ['/resources', 'Help and resources', 'help'],
+  ['/', 'Public website', 'globe'],
+];
+
+const brand = (href) => html`<a class="brand" href="${href}"><span class="brand-mark" aria-hidden="true">${PRODUCT.charAt(0).toUpperCase()}</span><span class="brand-name">${PRODUCT}</span></a>`;
+
+const head = (title, description) => html`<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -27,38 +37,71 @@ export function page({ title, description = '', body, user = null, path = '', ap
 <meta name="description" content="${description}">
 <link rel="stylesheet" href="/static/styles.css">
 <script src="/static/app.js" defer></script>
-</head>
+</head>`;
+
+const banner = html`<div class="prototype-banner" role="note"><div class="wrap"><span class="banner-dot" aria-hidden="true"></span>Pilot prototype. Some features are planned, not built. <a href="/status">See what works today</a></div></div>`;
+
+export function page({ title, description = '', body, user = null, path = '', app = false, flash = '', csrf = '', sideNav = [] }) {
+  const flashBlock = flash ? html`<div class="wrap"><p class="flash" role="status">${flash}</p></div>` : '';
+  if (app) {
+    return html`${head(title, description)}
+<body class="app">
+<a class="skip" href="#main">Skip to main content</a>
+<div class="shell">
+${appSidebar(user, path, csrf, sideNav)}
+<div class="shell-main">
+${banner}
+<main id="main" tabindex="-1">
+${flashBlock}
+${body}
+</main>
+<footer class="app-footer"><div class="wrap"><span>${PRODUCT}</span><a href="/status">Feature status</a><a href="/trust">Data and privacy</a><a href="/resources">Help</a></div></footer>
+</div>
+</div>
+</body>
+</html>`;
+  }
+  return html`${head(title, description)}
 <body>
 <a class="skip" href="#main">Skip to main content</a>
 <header class="site-header">
   <div class="wrap header-row">
-    <a class="brand" href="${app ? '/app' : '/'}"><span class="brand-mark" aria-hidden="true">${PRODUCT.charAt(0).toUpperCase()}</span> ${PRODUCT}</a>
-    ${nav}
+    ${brand('/')}
+    ${publicNav(path, user)}
   </div>
 </header>
-<div class="prototype-banner" role="note"><div class="wrap">Pilot prototype. Some features are planned, not built. <a href="/status">See what works today</a>.</div></div>
+${banner}
 <main id="main" tabindex="-1">
-${flash ? html`<div class="wrap"><p class="flash" role="status">${flash}</p></div>` : ''}
+${flashBlock}
 ${body}
 </main>
 <footer class="site-footer">
   <div class="wrap footer-grid">
-    <div>
-      <p class="brand-foot">${PRODUCT}</p>
-      <p class="muted">AI skills practice for university courses. ${PRODUCT_NOTE}</p>
+    <div class="footer-brand">
+      ${brand('/')}
+      <p class="muted">AI skills practice and assessment for university courses. ${PRODUCT_NOTE}</p>
     </div>
-    <nav aria-label="Footer">
+    <nav aria-label="Product">
+      <p class="footer-head">Product</p>
       <ul class="plain">
         <li><a href="/try">Try a sample lesson</a></li>
-        <li><a href="/curriculum">View the curriculum</a></li>
-        <li><a href="/contact">Request an institutional pilot</a></li>
+        <li><a href="/curriculum">Curriculum</a></li>
+        <li><a href="/plans">Plans and pilot</a></li>
       </ul>
     </nav>
-    <nav aria-label="Policies">
+    <nav aria-label="Company">
+      <p class="footer-head">Trust</p>
       <ul class="plain">
         <li><a href="/status">Feature status</a></li>
         <li><a href="/trust">Data, privacy &amp; accessibility</a></li>
         <li><a href="/research">Research &amp; evidence</a></li>
+      </ul>
+    </nav>
+    <nav aria-label="Get in touch">
+      <p class="footer-head">Contact</p>
+      <ul class="plain">
+        <li><a href="/contact">Request an institutional pilot</a></li>
+        <li><a href="/resources">Resources and FAQ</a></li>
       </ul>
     </nav>
   </div>
@@ -74,25 +117,31 @@ function publicNav(path, user) {
       <ul>
         ${NAV.map(([href, label]) => html`<li><a href="${href}"${path === href ? raw(' aria-current="page"') : ''}>${label}</a></li>`)}
         <li><a href="/contact"${path === '/contact' ? raw(' aria-current="page"') : ''}>Contact</a></li>
-        <li><a href="${user ? '/app' : '/login'}">${user ? 'Your workspace' : 'Sign in'}</a></li>
+        <li class="nav-sep"><a href="${user ? '/app' : '/login'}">${user ? 'Your workspace' : 'Sign in'}</a></li>
         <li><a class="button small" href="/try">Try a sample lesson</a></li>
       </ul>
     </details>
   </nav>`;
 }
 
-function appNav(user, path, csrf) {
-  return html`<nav class="main-nav" aria-label="Workspace">
-    <details class="menu">
+const initials = (name = '') => name.replace(/\(.*?\)/g, '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('') || '?';
+
+function appSidebar(user, path, csrf, extra) {
+  const items = [...APP_NAV.slice(0, 1), ...extra, ...APP_NAV.slice(1)];
+  return html`<aside class="sidebar" aria-label="Workspace">
+    <div class="sidebar-top">${brand('/app')}</div>
+    <details class="side-menu">
       <summary>Menu</summary>
-      <ul>
-        <li><a href="/app"${path === '/app' ? raw(' aria-current="page"') : ''}>Dashboard</a></li>
-        <li><a href="/">Public site</a></li>
-        <li><span class="muted">Signed in as ${user?.name}</span></li>
-        <li><form method="post" action="/logout" class="inline"><input type="hidden" name="_csrf" value="${csrf}"><button class="linklike" type="submit">Sign out</button></form></li>
-      </ul>
+      <nav aria-label="Workspace navigation"><ul class="side-nav">
+        ${items.map(([href, label, ic]) => html`<li><a href="${href}"${path === href ? raw(' aria-current="page"') : ''}>${icon(ic)}<span>${label}</span></a></li>`)}
+      </ul></nav>
+      <div class="user-card">
+        <span class="avatar" aria-hidden="true">${initials(user?.name)}</span>
+        <span class="user-meta"><span class="user-label">Signed in as</span><strong>${user?.name}</strong></span>
+        <form method="post" action="/logout" class="inline"><input type="hidden" name="_csrf" value="${csrf}"><button class="icon-button" type="submit" aria-label="Sign out">${icon('logout')}</button></form>
+      </div>
     </details>
-  </nav>`;
+  </aside>`;
 }
 
 export const csrfField = (user) => html`<input type="hidden" name="_csrf" value="${user?.csrf || ''}">`;

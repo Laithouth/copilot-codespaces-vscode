@@ -1,5 +1,6 @@
 import { html, raw, paras } from '../html.js';
 import { page, chip, csrfField } from '../views/layout.js';
+import { icon } from '../views/icons.js';
 import { requireUser, requireAssignment, memberships } from '../access.js';
 import { lessonIntro, materials, aiAnswer, lessonFields, parseResponse, hintsBlock, feedbackBlock, exampleBlock } from '../views/lesson.js';
 import { COMPETENCIES, LEVELS, levelLabel, competencyByCode } from '../content/competencies.js';
@@ -21,14 +22,22 @@ export const WHAT_IS_SAVED = html`<details class="disclosure"><summary>What is s
   <p>Who can see it: you, and the educators on this course. Institution administrators see aggregate reports only. Nothing outside this workspace is recorded: not your browsing and not conversations with other AI tools.</p>
   <p>How long: your institution's retention period applies. You can export your portfolio at any time.</p></details>`;
 
-function progressTable(profile) {
-  return html`<div class="table-wrap" tabindex="0" role="region" aria-label="Table, scrolls sideways on small screens"><table>
-    <caption>Demonstrated competency (educator-confirmed)</caption>
-    <thead><tr><th scope="col">Criterion</th><th scope="col">Confirmed level</th><th scope="col">Provisional (not yet reviewed)</th></tr></thead>
-    <tbody>${COMPETENCIES.map((c) => { const p = profile[c.code]; return html`<tr><th scope="row">${c.title}</th>
-      <td>${p?.final !== null && p?.final !== undefined ? chip(LEVELS[p.final].label, p.final >= 2 ? 'good' : '') : html`<span class="muted">No confirmed evidence yet</span>`}</td>
-      <td>${p?.provisional !== null && p?.provisional !== undefined ? html`<span class="muted">${LEVELS[p.provisional].label}</span>` : html`<span class="muted">—</span>`}</td></tr>`; })}</tbody>
-  </table></div>`;
+// Skill meters: three segments per criterion. Solid = educator-confirmed
+// level; hatched = provisional level from automated checks. Every state is
+// also given in words.
+function skillMeters(profile) {
+  return html`<ul class="skills" aria-label="Demonstrated competency by criterion">
+    ${COMPETENCIES.map((c) => {
+      const p = profile[c.code] || {};
+      const confirmed = p.final ?? null;
+      const provisional = p.provisional ?? null;
+      const seg = (i) => (confirmed !== null && i < confirmed ? 'on' : confirmed === null && provisional !== null && i < provisional ? 'prov' : '');
+      return html`<li class="skill"><span class="skill-name">${c.title}</span>
+        <span class="meter" aria-hidden="true"><span class="${seg(0)}"></span><span class="${seg(1)}"></span><span class="${seg(2)}"></span></span>
+        <span class="skill-level">${confirmed !== null ? html`<strong>${LEVELS[confirmed].label}</strong>` : html`No confirmed evidence yet`}
+          ${provisional !== null && confirmed === null ? html`<span class="muted">Provisional: ${LEVELS[provisional].label}</span>` : ''}</span></li>`;
+    })}
+  </ul>`;
 }
 
 function dashboard(ctx) {
@@ -46,8 +55,20 @@ function dashboard(ctx) {
     return html`<tr><td><a href="/app/assignments/${a.id}">${a.title}</a></td><td>${lessonFor(a).title}</td><td>${a.due_at || 'No deadline'}</td><td>${AI_POLICY[a.ai_policy].label}</td><td>${chip(state[0], state[1])}</td></tr>`;
   });
 
+  const profile = competencyProfile(db, user.id);
+  const allAssignments = studentCourses.flatMap((c) => db.prepare('SELECT id FROM assignments WHERE course_id = ?').all(c.id));
+  const mine = db.prepare(`SELECT assignment_id, MAX(version_no) AS v, MAX(status = 'submitted') AS sub FROM attempts WHERE student_id = ? GROUP BY assignment_id`).all(user.id);
+  const submittedN = mine.filter((m) => m.sub).length;
+  const revisionsN = mine.reduce((n, m) => n + Math.max(0, m.v - 1), 0);
+  const confirmedN = Object.values(profile).filter((p) => p.final !== null && p.final !== undefined).length;
   const body = html`<section class="wrap section">
-    <h1>Welcome, ${user.name}</h1>
+    <div class="page-head"><div><p class="eyebrow">Dashboard</p><h1>Welcome, ${user.name}</h1></div>
+      ${studentCourses.length ? html`<a class="button secondary" href="/app/portfolio">${icon('download')} Export portfolio</a>` : ''}</div>
+    ${studentCourses.length ? html`<div class="stats">
+      <div class="stat"><p class="stat-label">Assignments submitted</p><p class="stat-value">${submittedN} <small>of ${allAssignments.length}</small></p></div>
+      <div class="stat"><p class="stat-label">Revisions made</p><p class="stat-value">${revisionsN}</p></div>
+      <div class="stat"><p class="stat-label">Skills with confirmed evidence</p><p class="stat-value">${confirmedN} <small>of ${COMPETENCIES.length}</small></p></div>
+    </div>` : ''}
     ${mems.some((m) => m.is_demo) ? html`<p class="note">This account belongs to a <strong>demonstration institution</strong>. Its courses, people and records are fictional and separate from any live student data.</p>` : ''}
     ${studentCourses.length ? html`
       <h2>Your assignments</h2>
@@ -56,14 +77,14 @@ function dashboard(ctx) {
         <tbody>${assignmentRows(c)}</tbody></table></div>`)}
       <h2>Your progress</h2>
       <p>Progress is measured by demonstrated competency. Only levels your educator has confirmed count; provisional levels from automated checks are shown for information.</p>
-      ${progressTable(competencyProfile(db, user.id))}
-      <div class="actions"><a class="button secondary" href="/app/portfolio">Export your portfolio</a></div>` : ''}
+      ${skillMeters(profile)}
+      ` : ''}
     ${teachingCourses.length ? html`<h2>Courses you teach</h2><ul>${teachingCourses.map((c) => html`<li><a href="/app/courses/${c.id}">${c.code}: ${c.title}</a> <span class="muted">(${c.inst})</span></li>`)}</ul>` : ''}
     ${adminOf.length ? html`<h2>Administration</h2><ul>${adminOf.map((m) => html`<li><a href="/app/admin/${m.institution_id}">${m.name}</a></li>`)}</ul>` : ''}
     ${user.is_platform_admin ? html`<h2>Platform</h2><p><a href="/app/platform">Platform administration</a></p>` : ''}
     ${!studentCourses.length && !teachingCourses.length && !adminOf.length && !user.is_platform_admin ? html`<p>You're not enrolled in any courses yet. Your educator or institution will add you.</p>` : ''}
   </section>`;
-  return page({ title: 'Dashboard', body, user, app: true, path: '/app', csrf: user.csrf, flash: String(ctx.query.msg || '').slice(0, 300) });
+  return page({ title: 'Dashboard', body, user, app: true, path: '/app', csrf: user.csrf, sideNav: studentCourses.length ? [['/app/portfolio', 'Export portfolio', 'download']] : [], flash: String(ctx.query.msg || '').slice(0, 300) });
 }
 
 function runsBlock(runs) {
