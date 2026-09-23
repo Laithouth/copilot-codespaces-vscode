@@ -151,7 +151,7 @@ const overview = page({
     <p class="small muted">All people, organisations, figures and records in this prototype are fictional.</p>
   </section>`,
 });
-writeFileSync(join(OUT, 'index.html'), rewrite(String(overview), ROLES[0]));
+writeFileSync(join(OUT, 'index.html'), rewrite(String(overview), ROLES[0]).replace(/<title>[^<]*<\/title>/, `<title>${PRODUCT} Prototype</title>`));
 
 // ---- Assets: styles, the site script, the prototype script and the modules the live sample lesson needs ----
 for (const f of readdirSync(join(ROOT, 'public'))) copyFileSync(join(ROOT, 'public', f), join(OUT, 'assets', f));
