@@ -1,0 +1,155 @@
+// Foundation course: eight modules, estimated 8–12 hours in total. The time
+// estimates are planning figures to be checked in the pilot.
+export const COURSE = {
+  title: 'Foundation course: Using AI well for academic and professional tasks',
+  hours: '8–12 hours of learning and practice (estimate, to be validated in the pilot)',
+  audience: 'University students aged 18 and over, including beginners without a technical background.',
+  contentReviewed: 'September 2026',
+};
+
+export const MODULE_STATUS = {
+  available: { label: 'Available in the pilot build', note: 'Lesson, materials, practice workspace, provisional feedback and rubric are built.' },
+  specified: { label: 'Specified, not yet built', note: 'Outcomes, tasks and assessment are written; the interactive lesson is not available yet.' },
+};
+
+export const MODULES = [
+  {
+    no: 1,
+    title: 'Understanding AI and choosing suitable tasks',
+    status: 'available',
+    lesson: 'choosing-suitable-tasks',
+    time: '60–75 min',
+    prerequisites: 'None.',
+    outcomes: [
+      'Describe in plain language what current AI chat tools do well and where they are unreliable.',
+      'Decide whether a task is suitable for AI, suitable with conditions, or better done another way.',
+      'Justify the decision with reference to the assignment rules, the information involved, whether the result can be checked, and what AI adds.',
+    ],
+    taskExample: 'Decide whether to use a public chatbot to summarise interview transcripts that contain participants\' names.',
+    deliverable: 'A task suitability decision with a short explanation, for a task from one of your own courses.',
+    assessment: ['Six scenario decisions with reasons (provisional automated feedback, educator review)', 'Own-course suitability decision marked against the Tool and approach selection criterion'],
+    competencies: ['tool_selection', 'responsible_use'],
+  },
+  {
+    no: 2,
+    title: 'Defining a useful request',
+    status: 'available',
+    lesson: 'defining-a-useful-request',
+    time: '75–90 min',
+    prerequisites: 'Module 1.',
+    outcomes: [
+      'Turn a vague request into a brief with objective, audience, inputs, constraints, output format and success criteria.',
+      'Write an initial instruction that carries the brief to the model.',
+      'Evaluate an output against your own success criteria and revise one aspect at a time.',
+    ],
+    taskExample: 'Turn "write something about social media for small businesses" into a brief for a bakery owner with three hours a week to spare.',
+    deliverable: 'A task brief, an initial prompt, an evaluation of the output, one targeted revision and a judgement of whether it helped.',
+    assessment: ['Brief completeness and checkability of success criteria', 'Instruction quality and revision criteria, educator-reviewed'],
+    competencies: ['task_definition', 'instruction_quality', 'revision'],
+  },
+  {
+    no: 3,
+    title: 'Examples and structured outputs',
+    status: 'specified',
+    time: '60–90 min',
+    prerequisites: 'Module 2.',
+    outcomes: [
+      'Use examples to show the model the expected form of an answer.',
+      'Mark clear boundaries between instructions and supplied documents.',
+      'Specify tables and formats, and check extracted values against the source.',
+    ],
+    taskExample: 'Extract the dates, parties and obligations from a supplied (fictional) supplier agreement into a table, then check every cell.',
+    deliverable: 'A checked structured result from a supplied source, with each checked cell marked.',
+    assessment: ['Cell-by-cell accuracy against an answer key', 'Instruction quality criterion'],
+    competencies: ['instruction_quality', 'verification'],
+  },
+  {
+    no: 4,
+    title: 'Checking claims and sources',
+    status: 'available',
+    lesson: 'checking-claims-and-sources',
+    time: '60–90 min',
+    prerequisites: 'Module 1. (Also works as a stand-alone sample lesson.)',
+    outcomes: [
+      'Recognise fabricated references, unsupported certainty and missing evidence in an AI-written answer.',
+      'Verify each consequential claim against supplied sources and record the evidence.',
+      'Produce a corrected answer and state what remains uncertain.',
+    ],
+    taskExample: 'Check an AI-written recommendation about Sunday library opening against three supplied sources.',
+    deliverable: 'An annotated answer showing verified and unsupported claims, a corrected answer and an uncertainty statement.',
+    assessment: ['Claim verdicts against an answer key', 'Verification criterion (provisional automated level, educator-confirmed)', 'Independent check without hints'],
+    competencies: ['verification', 'revision', 'responsible_use'],
+  },
+  {
+    no: 5,
+    title: 'Working with numbers and code',
+    status: 'specified',
+    time: '60–90 min',
+    prerequisites: 'Modules 2 and 4. Basic spreadsheet use.',
+    outcomes: [
+      'Ask for spreadsheet formulas or small scripts and check them on known cases.',
+      'Recognise missing values, unit problems and ambiguous definitions in a small dataset.',
+      'Reproduce a key calculation independently and record the checks.',
+    ],
+    taskExample: 'Clarify what "top-performing region" means in a small synthetic sales dataset with a missing value, then analyse and check it.',
+    deliverable: 'A verified result, a record of checks, and a short recommendation with limitations.',
+    assessment: ['Correct handling of the missing value and definition', 'Independent recalculation', 'Verification criterion'],
+    competencies: ['task_definition', 'verification'],
+  },
+  {
+    no: 6,
+    title: 'Research and communication',
+    status: 'specified',
+    time: '60–90 min',
+    prerequisites: 'Module 4.',
+    outcomes: [
+      'Compare sources and summarise them faithfully.',
+      'Adapt a message to an audience without changing what the evidence supports.',
+      'Separate evidence from interpretation in your own writing.',
+    ],
+    taskExample: 'Write a 250-word evidence brief for a non-specialist manager from a supplied source pack.',
+    deliverable: 'A short evidence-based brief with evidence and interpretation marked.',
+    assessment: ['Faithfulness to sources', 'Audience fit', 'Verification and instruction quality criteria'],
+    competencies: ['instruction_quality', 'verification'],
+  },
+  {
+    no: 7,
+    title: 'Responsible workflows',
+    status: 'specified',
+    time: '60–75 min',
+    prerequisites: 'Modules 1 and 4.',
+    outcomes: [
+      'Decide what information may be shared with which tool, under course and institution rules.',
+      'Check outputs for bias and misrepresentation relevant to the task.',
+      'Write an accurate disclosure of AI use for an assignment.',
+    ],
+    taskExample: 'Revise a classmate\'s workflow that pasted a group member\'s personal details into an unapproved tool, then write a disclosure for the revised workflow.',
+    deliverable: 'A revised workflow with a disclosure statement.',
+    assessment: ['Responsible use criterion', 'Disclosure checked against the saved record'],
+    competencies: ['responsible_use', 'tool_selection'],
+  },
+  {
+    no: 8,
+    title: 'Independent application',
+    status: 'specified',
+    time: '90–120 min',
+    prerequisites: 'Modules 1–7.',
+    outcomes: [
+      'Complete an unfamiliar task with approved AI tools and reduced coaching.',
+      'Show the prompts, checks and revisions that led to the final work.',
+      'Explain your decisions concisely.',
+    ],
+    taskExample: 'An unfamiliar discipline-specific task chosen by the educator, completed without hints.',
+    deliverable: 'Final work plus relevant prompts, checks, revisions and a concise explanation of decisions.',
+    assessment: ['All six criteria, educator-assessed', 'Counts as independent evidence only when completed without platform coaching'],
+    competencies: ['task_definition', 'tool_selection', 'instruction_quality', 'verification', 'revision', 'responsible_use'],
+  },
+];
+
+// The practice sequence every module follows.
+export const PRACTICE_SEQUENCE = [
+  ['Worked example', 'Students see a complete example with the reasoning shown.'],
+  ['Partially supported exercise', 'Students attempt a similar task. Hints are available in practice mode and are recorded.'],
+  ['Independent exercise', 'A short task without hints, in the same lesson.'],
+  ['Later task in a new context', 'Module 8 and the delayed transfer check revisit the skill with different material.'],
+];
