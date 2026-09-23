@@ -26,62 +26,98 @@ function home(ctx) {
   const c5 = LESSONS['checking-claims-and-sources'].claims.find((c) => c.key === 'C5');
   const body = html`
   <section class="hero"><div class="wrap hero-grid">
-    <div>
+    <div class="hero-copy">
       <span class="kicker">${icon('spark')} AI skills course for universities</span>
-      <h1>Learn to use AI effectively for real academic and professional tasks</h1>
+      <h1>Learn to use AI <span class="hl">effectively</span> for real academic and professional tasks</h1>
       <p class="lead">Students practise realistic assignments, check what AI gives them and get feedback linked to clear learning objectives. Educators see the decisions behind each piece of work and track evidence of what each student can do.</p>
       <div class="actions">
         <a class="button large" href="/try">Try a sample lesson ${icon('arrow')}</a>
         <a class="button secondary large" href="/curriculum">View the curriculum</a>
       </div>
       <ul class="hero-points">
-        <li>${icon('check')} Eight practical modules</li>
-        <li>${icon('check')} Feedback students can act on</li>
-        <li>${icon('check')} Evidence educators can review</li>
+        <li>${icon('check')} Free sample, no account</li>
+        <li>${icon('check')} Nothing you type is saved</li>
+        <li>${icon('check')} A method that works across tools</li>
       </ul>
-      <p class="small muted">Buying for a department? <a href="/contact">Request an institutional pilot</a>.</p>
     </div>
     <figure class="preview">
-      <div class="preview-window" aria-hidden="true">
-        <div class="preview-bar"><i></i><i></i><i></i><span>Module 4 · Checking claims and sources</span></div>
-        <div class="preview-body">
-          <div class="preview-claim"><span class="label-tag">Claim C5</span>
-            <p class="claim-text">${c5.text}</p>
-            <div class="preview-options"><span>Supported</span><span>Not in the sources</span><span class="on">Reference could not be verified</span></div>
+      <div class="preview-stage">
+        <div class="preview-window" aria-hidden="true">
+          <div class="preview-bar"><i></i><i></i><i></i><span>Module 4 · Checking claims and sources</span></div>
+          <div class="preview-body">
+            <div class="preview-claim"><span class="label-tag">Claim C5</span>
+              <p class="claim-text">${c5.text}</p>
+              <div class="preview-options"><span>Supported</span><span>Not in the sources</span><span class="on">Reference could not be verified</span></div>
+            </div>
+            <div class="preview-feedback"><span class="chip good">Resolved since last version</span>
+              <p><strong>Good revision.</strong> You removed the invented study and its 20% figure, and added the cost from Source C.</p>
+            </div>
+            <div class="skill"><span class="skill-name">Verification</span><span class="meter"><span class="on"></span><span class="on"></span><span></span></span><span class="skill-level">Limited support</span></div>
           </div>
-          <div class="preview-feedback"><span class="chip good">Resolved since last version</span>
-            <p><strong>Good revision.</strong> You removed the invented study and its 20% figure, and added the cost from Source C.</p>
-          </div>
-          <div class="skill"><span class="skill-name">Verification</span><span class="meter"><span class="on"></span><span class="on"></span><span></span></span><span class="skill-level">Limited support</span></div>
         </div>
+        <div class="float-card float-a" aria-hidden="true"><span class="float-icon good">${icon('check')}</span><span><strong>Level confirmed</strong><small>by the educator</small></span></div>
+        <div class="float-card float-b" aria-hidden="true"><span class="float-icon">${icon('search')}</span><span><strong>1 invented source</strong><small>caught and removed</small></span></div>
       </div>
       <figcaption>The lesson workspace: students check claims, get feedback and build evidence of skill.</figcaption>
     </figure>
   </div></section>
 
+  <section class="facts" aria-label="The course at a glance"><div class="wrap">
+    <ul class="facts-row">
+      <li><strong>8</strong><span>practical modules</span></li>
+      <li><strong>6</strong><span>assessed skills</span></li>
+      <li><strong>9–12 h</strong><span>of guided practice</span></li>
+      <li><strong>3</strong><span>workspaces: student, educator, admin</span></li>
+    </ul>
+  </div></section>
+
   <section class="wrap section">
+    <div class="section-head center">
+      <p class="eyebrow">How a lesson works</p>
+      <h2>Practice that shows its working</h2>
+      <p class="muted">Every lesson follows the same loop, so students build a habit rather than memorise tricks.</p>
+    </div>
+    <ol class="flow">
+      <li><span class="flow-no">1</span><h3>Attempt a real task</h3><p>A realistic brief with supplied materials, in a subject students recognise.</p></li>
+      <li><span class="flow-no">2</span><h3>Check the AI output</h3><p>Claims, sources, numbers and omissions, each with a verdict and the evidence.</p></li>
+      <li><span class="flow-no">3</span><h3>Get focused feedback</h3><p>At most two issues at a time, each linked to a skill and a way to fix it.</p></li>
+      <li><span class="flow-no">4</span><h3>Educator confirms</h3><p>Feedback is provisional. Only levels an educator confirms count as evidence.</p></li>
+    </ol>
+  </section>
+
+  <section class="band" aria-labelledby="method-h"><div class="wrap section">
     <div class="section-head">
       <p class="eyebrow">The method</p>
-      <h2>What students learn to do</h2>
+      <h2 id="method-h">What students learn to do</h2>
       <p class="muted">The course teaches a method that transfers between tools, not tricks for one product.</p>
     </div>
     <div class="feature-grid">
       <div class="feature"><span class="feature-icon">${icon('pen')}</span><h3>Define the task</h3><p>Objective, audience, materials, constraints and what success looks like.</p></div>
-      <div class="feature"><span class="feature-icon">${icon('layers')}</span><h3>Choose an appropriate tool</h3><p>Or decide that AI is the wrong method for this task.</p></div>
-      <div class="feature"><span class="feature-icon">${icon('spark')}</span><h3>Give useful instructions</h3><p>Instructions that carry the task's context and limits.</p></div>
-      <div class="feature"><span class="feature-icon">${icon('search')}</span><h3>Evaluate the result</h3><p>Check claims, sources, numbers and omissions.</p></div>
-      <div class="feature"><span class="feature-icon">${icon('chart')}</span><h3>Improve the approach</h3><p>One change at a time, and judge whether it helped.</p></div>
-      <div class="feature"><span class="feature-icon">${icon('shield')}</span><h3>Explain their contribution</h3><p>And disclose AI use under the assignment's rules.</p></div>
+      <div class="feature"><span class="feature-icon tone-2">${icon('layers')}</span><h3>Choose an appropriate tool</h3><p>Or decide that AI is the wrong method for this task.</p></div>
+      <div class="feature"><span class="feature-icon tone-3">${icon('spark')}</span><h3>Give useful instructions</h3><p>Instructions that carry the task's context and limits.</p></div>
+      <div class="feature"><span class="feature-icon tone-4">${icon('search')}</span><h3>Evaluate the result</h3><p>Check claims, sources, numbers and omissions.</p></div>
+      <div class="feature"><span class="feature-icon tone-2">${icon('chart')}</span><h3>Improve the approach</h3><p>One change at a time, and judge whether it helped.</p></div>
+      <div class="feature"><span class="feature-icon tone-3">${icon('shield')}</span><h3>Explain their contribution</h3><p>And disclose AI use under the assignment's rules.</p></div>
     </div>
+  </div></section>
+
+  <section class="wrap section" aria-labelledby="modules-h">
+    <div class="section-head split">
+      <div><p class="eyebrow">The curriculum</p><h2 id="modules-h">Eight modules, from first decision to independent work</h2></div>
+      <a class="button secondary" href="/curriculum">Full curriculum ${icon('arrow')}</a>
+    </div>
+    <ol class="module-grid">
+      ${MODULES.map((m) => html`<li><a class="module-tile" href="/curriculum/module-${m.no}"><span class="module-no">${String(m.no).padStart(2, '0')}</span><span class="module-title">${m.title}</span><span class="module-time">${m.time}</span></a></li>`)}
+    </ol>
   </section>
 
-  <section class="band" aria-labelledby="sample-h"><div class="wrap section">
+  <section class="sample-band" aria-labelledby="sample-h"><div class="wrap section">
     <div class="grid two">
       <div>
         <p class="eyebrow">Two-minute sample</p>
         <h2 id="sample-h">Would you put this sentence in a report?</h2>
-        <p class="muted">An AI assistant wrote it in an answer about whether a (fictional) town library should open on Sundays.</p>
-        <p class="ai-output">${c5.text}</p>
+        <p>An AI assistant wrote it in an answer about whether a (fictional) town library should open on Sundays.</p>
+        <div class="chat"><span class="chat-who">${icon('spark')} AI assistant</span><p>${c5.text}</p></div>
       </div>
       <div class="card">
         <h3>What a careful checker does</h3>
@@ -94,10 +130,10 @@ function home(ctx) {
 
   <section class="wrap section">
     <div class="section-head"><p class="eyebrow">Who it is for</p><h2>Built for the whole course team</h2></div>
-    <div class="feature-grid">
-      <div class="feature"><span class="feature-icon">${icon('book')}</span><h3>Students</h3><p>Aged 18 and over, including beginners with no technical background. Practise with realistic business and academic tasks, get specific feedback, and keep a portfolio that shows your work, the AI's output and your checks separately.</p><p><a href="/how-it-works">How the practice works</a></p></div>
-      <div class="feature"><span class="feature-icon">${icon('users')}</span><h3>Educators</h3><p>Embed a short AI skills course in an existing subject. Set the AI rules for each assignment, see students' prompts, checks and revisions, review provisional feedback and confirm rubric levels.</p><p><a href="/resources">Teaching resources</a></p></div>
-      <div class="feature"><span class="feature-icon">${icon('shield')}</span><h3>Institutions</h3><p>A consistent approach across courses, with approved AI providers, usage limits, retention settings and reports built on demonstrated skill rather than time spent.</p><p><a href="/institutions">For institutions</a></p></div>
+    <div class="audience-grid">
+      <div class="audience"><span class="feature-icon">${icon('book')}</span><h3>Students</h3><p>Aged 18 and over, including beginners with no technical background. Practise with realistic business and academic tasks, get specific feedback, and keep a portfolio that shows your work, the AI's output and your checks separately.</p><p><a href="/how-it-works">How the practice works ${icon('arrow')}</a></p></div>
+      <div class="audience"><span class="feature-icon tone-2">${icon('users')}</span><h3>Educators</h3><p>Embed a short AI skills course in an existing subject. Set the AI rules for each assignment, see students' prompts, checks and revisions, review provisional feedback and confirm rubric levels.</p><p><a href="/resources">Teaching resources ${icon('arrow')}</a></p></div>
+      <div class="audience"><span class="feature-icon tone-4">${icon('shield')}</span><h3>Institutions</h3><p>A consistent approach across courses, with approved AI providers, usage limits, retention settings and reports built on demonstrated skill rather than time spent.</p><p><a href="/institutions">For institutions ${icon('arrow')}</a></p></div>
     </div>
   </section>
 
@@ -111,12 +147,15 @@ function home(ctx) {
   </div></section>
 
   <section class="wrap section">
-    <div class="card cta">
+    <div class="cta-panel">
       <div>
         <h2>Run a pilot with your department</h2>
-        <p class="muted">${PRODUCT} has not yet been piloted with students, so we have no results to report. We are looking for a first department to run a pilot with a published evaluation. <a href="/research">How we will evaluate learning</a>.</p>
+        <p>${PRODUCT} has not yet been piloted with students, so we have no results to report. We are looking for a first department to run a pilot with a published evaluation. <a href="/research">How we will evaluate learning</a>.</p>
       </div>
-      ${PRIMARY_CTAS}
+      <div class="actions">
+        <a class="button light large" href="/contact">Request an institutional pilot</a>
+        <a class="button ghost large" href="/try">Try a sample lesson</a>
+      </div>
     </div>
   </section>`;
   return page({ title: '', description: 'AI skills practice and assessment for university courses.', body, user: ctx.user, path: '/' });

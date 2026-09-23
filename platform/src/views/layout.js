@@ -26,7 +26,10 @@ const APP_NAV = [
   ['/', 'Public website', 'globe'],
 ];
 
-const brand = (href) => html`<a class="brand" href="${href}"><span class="brand-mark" aria-hidden="true">${PRODUCT.charAt(0).toUpperCase()}</span><span class="brand-name">${PRODUCT}</span></a>`;
+// The logo mark: an AI spark above a check mark ("use AI, then check it").
+// It carries no letters, so it still works when the product is white-labelled.
+export const LOGO_MARK = raw('<svg class="logo-glyph" viewBox="0 0 40 40" width="24" height="24" aria-hidden="true" focusable="false"><path class="logo-spark" d="M13.5 6.5c.6 3.6 1.9 4.9 5.5 5.5-3.6.6-4.9 1.9-5.5 5.5-.6-3.6-1.9-4.9-5.5-5.5 3.6-.6 4.9-1.9 5.5-5.5z"/><path class="logo-check" d="M12 23l6 6 12.5-14.5" fill="none" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+const brand = (href) => html`<a class="brand" href="${href}"><span class="brand-mark" aria-hidden="true">${LOGO_MARK}</span><span class="brand-name">${PRODUCT}</span></a>`;
 
 const head = (title, description) => html`<!doctype html>
 <html lang="en">
@@ -35,6 +38,7 @@ const head = (title, description) => html`<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${title ? `${title} · ${PRODUCT}` : PRODUCT}</title>
 <meta name="description" content="${description}">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/static/styles.css">
 <script src="/static/app.js" defer></script>
 </head>`;
