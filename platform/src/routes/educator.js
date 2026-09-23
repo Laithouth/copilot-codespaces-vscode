@@ -76,7 +76,7 @@ function coursePage(ctx, extra = '') {
 
     <details class="disclosure"${assignments.length ? '' : raw(' open')}><summary>Assign a lesson</summary>
       <form method="post" action="/app/courses/${course.id}/assignments">${csrfField(user)}
-        <div class="field"><label for="lesson">Lesson</label><select id="lesson" name="lesson">${Object.values(LESSONS).map((l) => html`<option value="${l.slug}">Module ${l.module}: ${l.title}</option>`)}</select></div>
+        <div class="field"><label for="lesson">Lesson</label><select id="lesson" name="lesson">${Object.values(LESSONS).sort((a, b) => a.module - b.module).map((l) => html`<option value="${l.slug}">Module ${l.module}: ${l.title}</option>`)}</select></div>
         <div class="field"><label for="title">Assignment title</label><input type="text" id="title" name="title" required></div>
         <div class="field"><label for="due_at">Deadline (optional)</label><input type="date" id="due_at" name="due_at"></div>
         <fieldset><legend>AI use for this assignment</legend>${Object.entries(AI_POLICY).map(([k, p]) => html`<label class="check"><input type="radio" name="ai_policy" value="${k}"${k === 'limited' ? raw(' checked') : ''}> <span><strong>${p.label}.</strong> ${p.text}</span></label>`)}</fieldset>
@@ -352,7 +352,7 @@ export function courseReportCsv(db, course) {
   const students = courseStudents(db, course.id);
   const lines = [csvRow(['course', 'student_name', 'student_email', 'assignment', 'lesson', 'ai_policy', 'mode', 'versions_submitted', 'last_submitted_utc', 'hints_used', 'claims_correct_latest', 'independent_item_correct_latest',
     ...COMPETENCIES.map((c) => `confirmed_${c.code}`), ...COMPETENCIES.map((c) => `provisional_${c.code}`),
-    'numbers_definition_latest', 'numbers_figures_correct_latest', 'numbers_missing_value_handling_latest'])];
+    'numbers_definition_latest', 'numbers_figures_correct_latest', 'numbers_missing_value_handling_latest', 'key_items_correct_latest'])];
   for (const a of assignments) {
     for (const s of students) {
       const attempts = attemptsFor(db, a.id, s.id);
@@ -366,6 +366,13 @@ export function courseReportCsv(db, course) {
         independent = last.response.independent?.verdict ? String(LESSONS[a.lesson_slug].independent.expected.includes(last.response.independent.verdict)) : '';
       }
       let numbers = ['', '', ''];
+      let keyItems = '';
+      if (last && LESSONS[a.lesson_slug].form) {
+        const m = feedbackForAttempt(db, last.id).find((f) => f.author_type === 'automated')?.body.metrics || {};
+        const pair = [['cellsCorrect', 'cellsTotal'], ['claimsCorrect', 'claimsTotal'], ['decisionsCorrect', 'decisionsTotal']].find(([c]) => m[c] !== undefined);
+        keyItems = pair ? `${m[pair[0]]}/${m[pair[1]]}` : m.comparisonCorrect !== undefined ? (m.comparisonCorrect ? 'comparison correct' : 'comparison not shown') : '';
+        independent = m.independentCorrect === null || m.independentCorrect === undefined ? '' : String(m.independentCorrect);
+      }
       if (last && LESSONS[a.lesson_slug].type === 'numbers') {
         const m = feedbackForAttempt(db, last.id).find((f) => f.author_type === 'automated')?.body.metrics || {};
         numbers = [m.definition || '', m.valuesCorrect === null || m.valuesCorrect === undefined ? '' : `${m.valuesCorrect}/4`, m.handling || ''];
@@ -373,7 +380,7 @@ export function courseReportCsv(db, course) {
       }
       lines.push(csvRow([course.code, s.name, s.email, a.title, LESSONS[a.lesson_slug].title, a.ai_policy, a.mode, submitted.length, last?.submitted_at || '', attempts.reduce((n, x) => n + x.hints_used, 0), claims, independent,
         ...COMPETENCIES.map((c) => (ass[c.code]?.status === 'final' ? ass[c.code].level : '')),
-        ...COMPETENCIES.map((c) => (ass[c.code]?.status === 'provisional' ? ass[c.code].provisional_level : '')), ...numbers]));
+        ...COMPETENCIES.map((c) => (ass[c.code]?.status === 'provisional' ? ass[c.code].provisional_level : '')), ...numbers, keyItems]));
     }
   }
   return lines.join('\r\n') + '\r\n';

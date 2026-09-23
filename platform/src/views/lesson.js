@@ -27,7 +27,7 @@ function workedExample(lesson) {
       <p><span class="label-tag">After</span></p><p class="ai-output">${w.after}</p>
       <p>${w.why}</p></details>`;
   }
-  if (lesson.type === 'numbers') {
+  if (w.steps && !w.claim) {
     return html`<details class="disclosure" open><summary>${w.title}</summary>
       <p>${w.scenario}</p>
       <ol>${w.steps.map((s) => html`<li>${s}</li>`)}</ol></details>`;
@@ -57,6 +57,13 @@ export function salesTable() {
 }
 
 export function aiAnswer(lesson) {
+  if (lesson.aiDraft) {
+    return html`<section aria-labelledby="ai-answer-h">
+    <h2 id="ai-answer-h">The draft to check</h2>
+    <p class="label-tag">${lesson.aiDraft.intro}</p>
+    <div class="ai-output">${lesson.aiDraft.opening} ${lesson.claims.map((c) => html`[${c.key}] ${c.text} `)}</div>
+  </section>`;
+  }
   if (lesson.type !== 'evidence') return '';
   return html`<section aria-labelledby="ai-answer-h">
     <h2 id="ai-answer-h">The answer to check</h2>
@@ -71,6 +78,7 @@ const checked = (a, b) => (a === b ? raw(' checked') : '');
 // Form fields for the student's own work. `response` pre-fills a saved draft.
 export function lessonFields(lesson, response = {}, { readOnly = false } = {}) {
   const dis = readOnly ? raw(' disabled') : '';
+  if (lesson.form) return formFields(lesson, response, dis);
   if (lesson.type === 'evidence') {
     const v = response.verdicts || {};
     return html`
@@ -215,6 +223,7 @@ export function lessonFields(lesson, response = {}, { readOnly = false } = {}) {
 
 export function parseResponse(lesson, body) {
   const s = (k) => (typeof body[k] === 'string' ? body[k].slice(0, 20000) : '');
+  if (lesson.form) return parseForm(lesson, s);
   if (lesson.type === 'evidence') {
     const verdicts = {};
     const allowed = new Set(lesson.verdicts.map(([v]) => v));
@@ -274,7 +283,9 @@ export function feedbackBlock(result, { heading = 'Feedback on this version', pr
 export function exampleBlock(lesson) {
   const e = lesson.exampleResponse;
   let inner;
-  if (lesson.type === 'evidence') {
+  if (lesson.form) {
+    inner = genericExample(lesson);
+  } else if (lesson.type === 'evidence') {
     inner = html`
       <div class="table-wrap" tabindex="0" role="region" aria-label="Table, scrolls sideways on small screens"><table><caption>Answer key</caption><thead><tr><th scope="col">Claim</th><th scope="col">Verdict</th><th scope="col">Why</th></tr></thead>
       <tbody>${lesson.claims.map((c) => html`<tr><th scope="row">${c.key}</th><td>${lesson.verdicts.find(([v]) => v === c.expected[0])[1]}${c.source ? ` (Source ${c.source})` : ''}</td><td>${c.explain}</td></tr>`)}
@@ -304,4 +315,68 @@ export function exampleBlock(lesson) {
   return html`<section class="card" aria-labelledby="ex-h"><h2 id="ex-h">Example response</h2>
     <p class="small muted">One good response, not the only one. Compare the reasoning, not the wording.</p>${inner}
     <h3>Common mistakes</h3><ul>${lesson.commonMistakes.map((m) => html`<li>${m}</li>`)}</ul></section>`;
+}
+
+// ---- Generic forms (lesson.form) --------------------------------------------
+
+function formFields(lesson, r, dis) {
+  const field = (f) => {
+    const id = f.name;
+    if (f.kind === 'textarea') return html`<div class="field"><label for="${id}">${f.label}</label><textarea id="${id}" name="${id}" rows="${f.rows || 4}" data-dictate${dis}>${r[id] || ''}</textarea></div>`;
+    if (f.kind === 'text') return html`<div class="field"><label for="${id}">${f.label}</label><input type="text" id="${id}" name="${id}"${f.decimal ? raw(' inputmode="decimal"') : ''} value="${r[id] || ''}"${dis}></div>`;
+    if (f.kind === 'select') return html`<div class="field"><label for="${id}">${f.label}</label><select id="${id}" name="${id}"${dis}><option value="">Choose</option>${f.options.map(([v, l]) => html`<option value="${v}"${r[id] === v ? raw(' selected') : ''}>${l}</option>`)}</select></div>`;
+    if (f.kind === 'radio') return html`<fieldset><legend>${f.label}</legend><div class="radio-row">${f.options.map(([v, l]) => html`<label><input type="radio" name="${id}" value="${v}"${checked(r[id], v)}${dis}> ${l}</label>`)}</div></fieldset>`;
+    if (f.kind === 'cells') {
+      const cells = r.cells || {};
+      return lesson.cells.map((c) => html`<fieldset class="claim"><legend>${c.label}</legend>
+        <div class="field"><label for="cell_${c.key}">Value</label><input type="text" id="cell_${c.key}" name="cell_${c.key}" value="${cells[c.key]?.value || ''}"${dis}></div>
+        <div class="field"><label for="where_${c.key}">Where in the document (clause)</label><input type="text" id="where_${c.key}" name="where_${c.key}" value="${cells[c.key]?.where || ''}"${dis}></div></fieldset>`);
+    }
+    if (f.kind === 'claims') {
+      const v = r.verdicts || {};
+      return lesson.claims.map((c) => html`<fieldset class="claim"><legend>Claim ${c.key}</legend><p class="claim-text">${c.text}</p>
+        <div class="radio-row">${f.verdicts.map(([value, label]) => html`<label><input type="radio" name="v_${c.key}" value="${value}"${checked(v[c.key]?.verdict, value)}${dis}> ${label}</label>`)}</div>
+        <div class="field"><label for="src_${c.key}">Report used</label><select id="src_${c.key}" name="src_${c.key}"${dis}><option value="">None / not applicable</option>${lesson.materials.map((m) => html`<option value="${m.id}"${v[c.key]?.source === m.id ? raw(' selected') : ''}>${m.id}</option>`)}</select></div></fieldset>`);
+    }
+    if (f.kind === 'decisions') {
+      const d = r.decisions || {};
+      return lesson.items.map((it) => html`<fieldset class="claim"><legend>Step ${it.key}</legend><p>${it.text}</p>
+        <div class="radio-row">${f.options.map(([value, label]) => html`<label><input type="radio" name="d_${it.key}" value="${value}"${checked(d[it.key]?.decision, value)}${dis}> ${label}</label>`)}</div>
+        <div class="field"><label for="r_${it.key}">Reason</label><input type="text" id="r_${it.key}" name="r_${it.key}" value="${d[it.key]?.reason || ''}"${dis}></div></fieldset>`);
+    }
+    return '';
+  };
+  return lesson.form.map((sec) => html`<fieldset><legend>${sec.legend}</legend>${sec.hint ? html`<p class="hint-text">${sec.hint}</p>` : ''}${sec.fields.map(field)}</fieldset>`);
+}
+
+function parseForm(lesson, s) {
+  const out = {};
+  for (const f of lesson.form.flatMap((sec) => sec.fields)) {
+    if (['textarea', 'text'].includes(f.kind)) out[f.name] = s(f.name);
+    else if (['select', 'radio'].includes(f.kind)) out[f.name] = f.options.some(([v]) => v === s(f.name)) ? s(f.name) : '';
+    else if (f.kind === 'cells') out.cells = Object.fromEntries(lesson.cells.map((c) => [c.key, { value: s(`cell_${c.key}`).slice(0, 500), where: s(`where_${c.key}`).slice(0, 200) }]));
+    else if (f.kind === 'claims') {
+      const ok = new Set(f.verdicts.map(([v]) => v)); const src = new Set(lesson.materials.map((m) => m.id));
+      out.verdicts = Object.fromEntries(lesson.claims.map((c) => [c.key, { verdict: ok.has(s(`v_${c.key}`)) ? s(`v_${c.key}`) : '', source: src.has(s(`src_${c.key}`)) ? s(`src_${c.key}`) : '', note: '' }]));
+    } else if (f.kind === 'decisions') {
+      const ok = new Set(f.options.map(([v]) => v));
+      out.decisions = Object.fromEntries(lesson.items.map((it) => [it.key, { decision: ok.has(s(`d_${it.key}`)) ? s(`d_${it.key}`) : '', reason: s(`r_${it.key}`).slice(0, 1000) }]));
+    }
+  }
+  return out;
+}
+
+function genericExample(lesson) {
+  const e = lesson.exampleResponse;
+  const label = (name) => lesson.form.flatMap((sec) => sec.fields).find((f) => f.name === name)?.label || name;
+  const rows = [];
+  if (e.cells) rows.push(html`<div class="table-wrap" tabindex="0" role="region" aria-label="Example extraction, scrolls sideways on small screens"><table><caption>Example extraction</caption><thead><tr><th scope="col">Field</th><th scope="col">Value</th><th scope="col">Where</th></tr></thead>
+    <tbody>${lesson.cells.map((c) => html`<tr><th scope="row">${c.label}</th><td>${e.cells[c.key][0]}</td><td>${e.cells[c.key][1]}</td></tr>`)}</tbody></table></div>`);
+  if (lesson.claims && lesson.aiDraft) rows.push(html`<div class="table-wrap" tabindex="0" role="region" aria-label="Answer key, scrolls sideways on small screens"><table><caption>Answer key</caption><thead><tr><th scope="col">Claim</th><th scope="col">Verdict</th><th scope="col">Why</th></tr></thead>
+    <tbody>${lesson.claims.map((c) => html`<tr><th scope="row">${c.key}</th><td>${lesson.form[0].fields[0].verdicts.find(([v]) => v === c.expected[0])[1]}${c.source ? ` (${c.source})` : ''}</td><td>${c.explain}</td></tr>`)}</tbody></table></div>`);
+  if (e.decisions) rows.push(html`<dl class="kv">${lesson.items.map((it) => html`<dt>${it.key}: ${e.decisions[it.key][0]}</dt><dd>${e.decisions[it.key][1]}</dd>`)}</dl>`);
+  const skip = new Set(['cells', 'decisions', 'ind', 'independent']);
+  rows.push(html`<dl class="kv">${Object.entries(e).filter(([k]) => !skip.has(k)).map(([k, v]) => html`<dt>${label(k)}</dt><dd>${paras(v)}</dd>`)}
+    ${e.ind || e.independent ? html`<dt>Independent item</dt><dd>${e.ind || e.independent}</dd>` : ''}</dl>`);
+  return rows;
 }

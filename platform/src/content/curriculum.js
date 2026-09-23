@@ -50,7 +50,8 @@ export const MODULES = [
   {
     no: 3,
     title: 'Examples and structured outputs',
-    status: 'specified',
+    status: 'available',
+    lesson: 'examples-and-structured-outputs',
     time: '60–90 min',
     prerequisites: 'Module 2.',
     outcomes: [
@@ -100,7 +101,8 @@ export const MODULES = [
   {
     no: 6,
     title: 'Research and communication',
-    status: 'specified',
+    status: 'available',
+    lesson: 'research-and-communication',
     time: '60–90 min',
     prerequisites: 'Module 4.',
     outcomes: [
@@ -116,7 +118,8 @@ export const MODULES = [
   {
     no: 7,
     title: 'Responsible workflows',
-    status: 'specified',
+    status: 'available',
+    lesson: 'responsible-workflows',
     time: '60–75 min',
     prerequisites: 'Modules 1 and 4.',
     outcomes: [
@@ -132,7 +135,8 @@ export const MODULES = [
   {
     no: 8,
     title: 'Independent application',
-    status: 'specified',
+    status: 'available',
+    lesson: 'independent-application',
     time: '90–120 min',
     prerequisites: 'Modules 1–7.',
     outcomes: [

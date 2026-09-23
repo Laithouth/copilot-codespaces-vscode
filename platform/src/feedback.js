@@ -18,7 +18,7 @@ export const MAX_SHOWN = 2;
 
 export function evaluate(lesson, response, ctx = {}) {
   const context = { hintsUsed: 0, versionNo: 1, previousIssueCodes: [], ...ctx };
-  const fn = { evidence: evaluateEvidence, suitability: evaluateSuitability, brief: evaluateBrief, numbers: evaluateNumbers }[lesson.type];
+  const fn = { evidence: evaluateEvidence, suitability: evaluateSuitability, brief: evaluateBrief, numbers: evaluateNumbers, extraction: evaluateExtraction, claims: evaluateClaims, decisions: evaluateDecisions, capstone: evaluateCapstone }[lesson.type];
   if (!fn) throw new Error(`No evaluator for lesson type ${lesson.type}`);
   const result = fn(lesson, response || {}, context);
   result.issues.sort((a, b) => a.priority - b.priority);
@@ -318,4 +318,178 @@ function evaluateNumbers(lesson, r, ctx) {
     metrics: { definition: r.definition || null, handling: handling || null, valuesCorrect, independentCorrect },
     provisional: { task_definition: clampSupport(taskDefinition, ctx), verification: clampSupport(verification, ctx) },
   };
+}
+
+// ---- Module 3: extraction ----------------------------------------------------
+
+const MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+// Returns YYYY-MM-DD for "1 March 2026", "March 1, 2026", "01/03/2026" (day first),
+// "2026-03-01" or "1st of March 2026"; null otherwise.
+export function parseDate(v) {
+  const t = String(v || '').toLowerCase().replace(/(\d+)(st|nd|rd|th)/g, '$1').replace(/\bof\b/g, ' ').replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+  const pad = (n) => String(n).padStart(2, '0');
+  let m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) return `${m[1]}-${pad(m[2])}-${pad(m[3])}`;
+  m = t.match(/^(\d{1,2})[/.](\d{1,2})[/.](\d{4})$/);
+  if (m) return `${m[3]}-${pad(m[2])}-${pad(m[1])}`;
+  m = t.match(/^(\d{1,2}) ([a-z]+) (\d{4})$/);
+  if (m && MONTHS.findIndex((x) => x.startsWith(m[2].slice(0, 3))) >= 0) return `${m[3]}-${pad(MONTHS.findIndex((x) => x.startsWith(m[2].slice(0, 3))) + 1)}-${pad(m[1])}`;
+  m = t.match(/^([a-z]+) (\d{1,2}) (\d{4})$/);
+  if (m && MONTHS.findIndex((x) => x.startsWith(m[1].slice(0, 3))) >= 0) return `${m[3]}-${pad(MONTHS.findIndex((x) => x.startsWith(m[1].slice(0, 3))) + 1)}-${pad(m[2])}`;
+  return null;
+}
+
+function cellCorrect(c, value) {
+  const v = String(value || '').toLowerCase();
+  if (!v.trim()) return false;
+  if (c.date) return [].concat(c.date).includes(parseDate(value));
+  if (c.number !== undefined) return parseNumber(String(value).replace(/days?/i, '')) === c.number;
+  if (c.accept) return c.accept.some((a) => v.includes(a));
+  if (c.all) return c.all.every((group) => group.some((a) => v.includes(a)));
+  return false;
+}
+
+function evaluateExtraction(lesson, r, ctx) {
+  const issues = []; const strengths = [];
+  const cells = r.cells || {};
+  const results = Object.fromEntries(lesson.cells.map((c) => [c.key, cellCorrect(c, cells[c.key]?.value)]));
+  const empty = lesson.cells.filter((c) => !String(cells[c.key]?.value || '').trim()).map((c) => c.label);
+  const correct = Object.values(results).filter(Boolean).length;
+  if (empty.length) issues.push({ code: 'cells_empty', priority: 0, title: `Some fields are empty: ${empty.join(', ')}.`, why: 'An empty cell is ambiguous: missing from the document, or missed by you?', next: 'Fill every field, writing "not stated" where the document really says nothing.' });
+  const pay = parseNumber(String(cells.payment?.value || '').replace(/days?/i, ''));
+  if (pay === 30) issues.push({ code: 'amendment_missed', priority: 1, title: 'Payment terms: a later clause changes this.', why: 'Clause 9 amends clause 4. Taking the first value you find is the most common extraction error, for people and AI alike.', next: 'Read the whole agreement, including amendments, and use the clause that applies.' });
+  else if (!results.payment && cells.payment?.value) issues.push({ code: 'cell_wrong_payment', priority: 3, title: 'Check the payment terms again.', why: 'The value doesn\'t match the agreement.', next: 'Find every clause that mentions payment.' });
+  if (!results.footnote && !empty.includes('Other supplier obligation')) issues.push({ code: 'footnote_missed', priority: 2, title: 'There is a supplier obligation you haven\'t captured.', why: 'Obligations in footnotes are binding too, and they are easy to miss when skimming.', next: 'Check the footnotes and small print.' });
+  const wrongOther = lesson.cells.filter((c) => !['payment', 'footnote'].includes(c.key) && !results[c.key] && String(cells[c.key]?.value || '').trim()).map((c) => c.label);
+  if (wrongOther.length) issues.push({ code: 'cells_wrong', priority: 3, title: `Check these values against the agreement: ${wrongOther.join(', ')}.`, why: 'They don\'t match the document.', next: wrongOther.some((l) => /date/i.test(l)) ? 'For dates, convert words to numbers carefully, and work out "twelve months from" the start date.' : 'Find the clause each value comes from and compare word by word.' });
+  const unsourced = lesson.cells.filter((c) => String(cells[c.key]?.value || '').trim() && !String(cells[c.key]?.where || '').trim()).length;
+  if (unsourced >= 3) issues.push({ code: 'checks_unrecorded', priority: 4, title: 'Say which clause each value came from.', why: 'A cell with its clause noted can be checked by someone else in seconds.', next: 'Fill in "Where in the document" for each field.' });
+  const p = r.prompt || '';
+  const hasBoundary = /<\/?\w+>|"""|```|document:|between .* tags|---/i.test(p);
+  const hasExample = has(p, 'example', 'e.g.', 'for instance', 'such as', '| ');
+  const hasMissing = has(p, 'not stated', 'missing', 'not found', 'not in the document', 'n/a', 'unknown', 'if a field', 'blank', 'null', 'not present');
+  const promptScore = [hasBoundary, hasExample, hasMissing].filter(Boolean).length;
+  if (!p.trim()) issues.push({ code: 'prompt_missing', priority: 5, title: 'Write the extraction instruction.', why: 'A reusable instruction is half the deliverable.', next: 'Write the instruction you would give an AI for any similar agreement.' });
+  else {
+    if (!hasMissing) issues.push({ code: 'prompt_no_missing_rule', priority: 5, title: 'Your instruction doesn\'t say what to do when a field is missing.', why: 'Without a rule, models tend to fill gaps with plausible guesses.', next: 'Add: if a field isn\'t in the document, write "not stated".' });
+    if (!hasBoundary) issues.push({ code: 'prompt_no_boundary', priority: 6, title: 'Mark where the document starts and ends.', why: 'Clear markers stop the model confusing your instructions with the document\'s text.', next: 'Wrap the document in tags such as <document> … </document>.' });
+    if (!hasExample) issues.push({ code: 'prompt_no_example', priority: 7, title: 'Show one example row.', why: 'An example fixes the format far more reliably than describing it.', next: 'Add one example row in the exact format you want.' });
+  }
+  const indOk = { start: parseDate(r.ind_start) === lesson.independentKey.start, fee: parseNumber(r.ind_fee) === lesson.independentKey.fee, notice: parseNumber(r.ind_notice) === lesson.independentKey.notice };
+  const independentCorrect = r.ind_start || r.ind_fee || r.ind_notice ? Object.values(indOk).every(Boolean) : null;
+  if (!issues.some((i) => i.code === 'amendment_missed') && results.payment) strengths.push('You caught the amendment to the payment terms.');
+  if (results.footnote) strengths.push('You found the obligation in the footnote.');
+  if (promptScore === 3) strengths.push('Your instruction has a boundary, an example and a missing-field rule.');
+  if (independentCorrect) strengths.push('Your independent extraction was correct, including the Schedule 1 fee.');
+  let verification = correct === lesson.cells.length ? 3 : correct >= lesson.cells.length - 1 && results.payment && results.footnote ? 2 : correct >= lesson.cells.length / 2 ? 1 : 0;
+  if (!results.payment || !results.footnote) verification = Math.min(verification, 1);
+  if (independentCorrect === false) verification = Math.min(verification, 2);
+  return { issues, strengths, evidenceChecks: [], metrics: { cellsCorrect: correct, cellsTotal: lesson.cells.length, promptFeatures: promptScore, independentCorrect },
+    provisional: { verification: clampSupport(verification, ctx), instruction_quality: clampSupport(p.trim() ? promptScore : 0, ctx) } };
+}
+
+// ---- Module 6: claims against sources, plus a written brief -----------------
+
+function evaluateClaims(lesson, r, ctx) {
+  const issues = []; const strengths = [];
+  const verdicts = r.verdicts || {};
+  const checks = lesson.claims.map((c) => {
+    const v = verdicts[c.key] || {};
+    return { claim_key: c.key, verdict: v.verdict || '', source_ref: v.source || '', note: '', correct: v.verdict && c.expected.includes(v.verdict) ? 1 : 0 };
+  });
+  const unanswered = checks.filter((c) => !c.verdict).map((c) => c.claim_key);
+  if (unanswered.length) issues.push({ code: 'unanswered', priority: 0, title: `Some claims have no verdict yet (${unanswered.join(', ')}).`, why: 'Each claim in the draft could end up in front of the director.', next: 'Give each claim a verdict and the report you used.' });
+  for (const c of lesson.claims) {
+    const chk = checks.find((x) => x.claim_key === c.key);
+    if (chk.verdict && !chk.correct) issues.push({ ...c.issue });
+  }
+  const brief = r.brief_text || '';
+  const sentences = brief.split(/(?<=[.!?])\s+/);
+  if (!brief.trim()) issues.push({ code: 'no_brief', priority: 6, title: 'Write the brief.', why: 'The director needs a usable brief, not only a checked draft.', next: 'Write up to 250 words using only what the reports support.' });
+  else {
+    if (sentences.some((t) => has(t, 'turnover', '15%') && !has(t, 'no ', 'not ', 'none', 'removed'))) issues.push({ code: 'brief_unsupported', priority: 2, title: 'Your brief includes the turnover figure, which no report contains.', why: 'Unsourced figures shouldn\'t reach the reader.', next: 'Remove it.' });
+    if (sentences.some((t) => has(t, 'productivity rose', 'productivity increased', 'more productive') && !has(t, 'said', 'report', 'felt', 'self', 'respond', 'survey'))) issues.push({ code: 'brief_productivity', priority: 2, title: 'Your brief presents self-reported productivity as a measured result.', why: 'Only R2 measured output, and it fell.', next: 'Attribute the 41% to what respondents said, and give the measured figure alongside.' });
+    if (!has(brief, 'warehouse', 'new system', 'software')) issues.push({ code: 'brief_confounder_missing', priority: 3, title: 'Your brief leaves out why the 3% fall can\'t be blamed on hybrid working.', why: 'Without the warehouse-system caveat, the director will read the fall as caused by hybrid working.', next: 'Add the caveat from R2 in one sentence.' });
+    if (!(has(brief, 'disagree', 'conflict', 'differ', 'however', 'but ', 'different story', 'contrast', 'whereas', 'while '))) issues.push({ code: 'brief_disagreement_hidden', priority: 4, title: 'Say that the sources disagree.', why: 'What staff said (R1) and what was measured (R2) point in different directions. Blending them hides the most important finding.', next: 'Set the two side by side and say they disagree.' });
+    if (!has(brief, '12 manager', 'twelve manager', 'managers only', 'only manager', '12 team manager')) issues.push({ code: 'brief_weak_source', priority: 5, title: 'Mention how narrow the external review\'s evidence is.', why: 'R3 is based on 12 managers\' views; the director should know that before relying on it.', next: 'Add that detail where you mention R3.' });
+    if (!has(brief, 'interpretation')) issues.push({ code: 'interpretation_unlabelled', priority: 7, title: 'Label your own judgement.', why: 'The director needs to see which parts are evidence and which are your reading of it.', next: 'Put your judgement after "Interpretation:".' });
+    if (words(brief) > 250) issues.push({ code: 'too_long', priority: 8, title: `Your brief is ${words(brief)} words; the limit is 250.`, why: 'The director asked for a short brief.', next: 'Cut background and repetition; keep the findings, the caveats and your interpretation.' });
+  }
+  const independentCorrect = r.ind_report ? r.ind_report === 'R2' && has(r.ind_limit, 'warehouse', 'system', 'software', 'separate', 'confound', 'other cause') : null;
+  const correct = checks.filter((c) => c.correct).length;
+  const crit = lesson.claims.filter((c) => c.critical).every((c) => checks.find((x) => x.claim_key === c.key).correct);
+  if (crit) strengths.push('You caught both the reversed productivity claim and the unsupported cause.');
+  if (brief.trim() && !issues.some((i) => i.code.startsWith('brief_'))) strengths.push('Your brief keeps the caveats and reports the disagreement.');
+  if (independentCorrect) strengths.push('You identified the measured evidence and its limitation without hints.');
+  const briefIssues = issues.filter((i) => i.code.startsWith('brief_') || i.code === 'no_brief').length;
+  let verification = unanswered.length || correct <= 1 ? 0 : !crit || briefIssues >= 2 ? 1 : correct < lesson.claims.length || briefIssues || independentCorrect === false ? 2 : 3;
+  return { issues, strengths, evidenceChecks: checks, metrics: { claimsCorrect: correct, claimsTotal: lesson.claims.length, independentCorrect }, provisional: { verification: clampSupport(verification, ctx) } };
+}
+
+// ---- Module 7: workflow decisions, revised workflow and disclosure ---------
+
+function evaluateDecisions(lesson, r, ctx) {
+  const issues = []; const strengths = [];
+  const d = r.decisions || {};
+  let correct = 0; const thin = [];
+  for (const it of lesson.items) {
+    const x = d[it.key] || {};
+    if (!x.decision) { issues.push({ code: `missing_${it.key}`, priority: 0, title: `Step ${it.key} has no decision yet.`, why: 'Each step raises a different policy question.', next: 'Choose keep, change or remove, and give your reason.' }); continue; }
+    if (it.expected.includes(x.decision)) {
+      correct++;
+      if (words(x.reason) < 5 || !it.keywords.some((k) => has(x.reason, k))) thin.push(it.key);
+    } else issues.push({ code: `wrong_${it.key}`, priority: it.critical ? 1 : 3, title: `Look again at step ${it.key}.`, why: it.why, next: 'Check the step against the policy clause it touches.' });
+  }
+  if (thin.length) issues.push({ code: 'reasons_thin', priority: 4, title: `Your reasons for ${thin.join(', ')} don't say what decides it.`, why: 'Naming the policy point is what lets you make the same call in a new situation.', next: 'Say which part of the policy (data, ownership, checking or disclosure) decides each one.' });
+  const rev = r.revised || '';
+  if (!rev.trim()) issues.push({ code: 'no_revised', priority: 5, title: 'Write the revised workflow.', why: 'Decisions only matter once they change what the group does.', next: 'Write the workflow as numbered steps.' });
+  else if (has(rev, 'phone', 'student id', 'id number', 'marks') && !has(rev, 'no personal', 'without', 'remove', 'not ', 'never')) issues.push({ code: 'revised_keeps_data', priority: 2, title: 'Your revised workflow still sends personal data to an AI tool.', why: 'Phone numbers, ID numbers and marks are other students\' personal data (policy clause 2).', next: 'Take them out of any AI step.' });
+  const disc = r.disclosure_text || '';
+  const discParts = { tool: has(disc, 'university ai assistant', 'approved'), purpose: has(disc, 'timeline', 'bias', 'leading', 'wording', 'language', 'suggest'), checks: has(disc, 'check', 'verif', 'review'), own: has(disc, 'own', 'we wrote', 'our analysis', 'our conclusions', 'ourselves') };
+  const missingParts = Object.entries(discParts).filter(([, v]) => !v).map(([k]) => ({ tool: 'which tool', purpose: 'what it was used for', checks: 'what you checked', own: 'what is your own work' }[k]));
+  if (!disc.trim()) issues.push({ code: 'no_disclosure', priority: 5, title: 'Write the disclosure statement.', why: 'The policy requires it (clause 5).', next: 'State the tools, the purposes, what you checked and what is your own work.' });
+  else if (missingParts.length) issues.push({ code: 'disclosure_incomplete', priority: 6, title: `Your disclosure doesn't say ${missingParts.join(', ')}.`, why: 'A disclosure someone could check against the record names the tool, the purpose, the checks and what is your own.', next: 'Add the missing parts in a sentence each.' });
+  const ind = { decision: r.ind_decision, reason: r.ind_reason };
+  const independentCorrect = ind.decision ? lesson.independentItem.expected.includes(ind.decision) && lesson.independentItem.keywords.some((k) => has(ind.reason, k)) : null;
+  const critOk = lesson.items.filter((i) => i.critical).every((i) => i.expected.includes(d[i.key]?.decision));
+  if (critOk) strengths.push('You caught all three serious problems: others\' data, others\' work and the missing disclosure.');
+  if (disc.trim() && !missingParts.length) strengths.push('Your disclosure names the tool, purposes, checks and your own work.');
+  if (independentCorrect) strengths.push('You handled the job-application scenario correctly without hints.');
+  let responsible = !critOk ? (correct >= 4 ? 1 : 0) : issues.some((i) => ['no_revised', 'no_disclosure', 'revised_keeps_data'].includes(i.code)) ? 1 : issues.some((i) => ['disclosure_incomplete', 'reasons_thin'].includes(i.code)) || independentCorrect === false || correct < lesson.items.length ? 2 : 3;
+  const tool = correct === lesson.items.length ? 3 : critOk ? 2 : correct >= 3 ? 1 : 0;
+  return { issues, strengths, evidenceChecks: [], metrics: { decisionsCorrect: correct, decisionsTotal: lesson.items.length, independentCorrect }, provisional: { responsible_use: clampSupport(responsible, ctx), tool_selection: clampSupport(tool, ctx) } };
+}
+
+// ---- Module 8: independent application --------------------------------------
+
+function numbersIn(text) {
+  return [...String(text || '').matchAll(/£?\s?(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)/g)].map((m) => Number(m[1].replace(/,/g, '')));
+}
+
+function evaluateCapstone(lesson, r, ctx) {
+  const issues = []; const strengths = [];
+  const required = [['plan', 'the plan'], ['tools', 'your tool choices'], ['checks', 'what you checked'], ['final_work', 'the final work'], ['explanation', 'the explanation']];
+  const missing = required.filter(([k]) => !String(r[k] || '').trim()).map(([, l]) => l);
+  if (missing.length) issues.push({ code: 'record_incomplete', priority: 0, title: `Still needed: ${missing.join(', ')}.`, why: 'In this module the record is part of the evidence: your educator assesses the decisions as well as the result.', next: 'Complete each part of the record.' });
+  const criteria = String(r.plan || '').split('\n').map((l) => l.trim()).filter((l) => words(l) >= 4);
+  if (r.plan && criteria.length < 3) issues.push({ code: 'plan_thin', priority: 2, title: 'Your plan needs checkable success criteria.', why: 'Criteria written before you start are what you judge the result against.', next: 'Add at least two criteria, one per line, that someone else could check.' });
+  const final = r.final_work || '';
+  const nums = numbersIn(`${final} ${r.checks}`);
+  const hasA = nums.some((n) => Math.abs(n - 29) < 0.01);
+  const hasB = nums.some((n) => n >= 99 && n <= 149) || nums.some((n) => Math.abs(n - 2.48) < 0.01);
+  const extraOnly = nums.some((n) => (n >= 24 && n <= 25) || (n >= 49 && n <= 50)) && !nums.some((n) => n >= 99 && n <= 149);
+  if (final.trim()) {
+    if (extraOnly) issues.push({ code: 'fees_extra_only', priority: 1, title: 'Your Option B cost seems to cover only the extra orders.', why: 'The fact sheet says both services charge on all online orders, including existing customers who switch.', next: 'Recalculate Option B on all online orders, then compare with Option A.' });
+    else if (!hasA || !hasB) issues.push({ code: 'comparison_missing', priority: 1, title: 'Show the cost comparison behind your recommendation.', why: 'Sam needs to see what each option would cost at realistic order numbers.', next: 'Give Option A\'s monthly cost and Option B\'s cost at the order numbers you think are realistic.' });
+    if (!has(final, 'guess', 'uncertain', 'estimate', 'no data', 'assum', 'unknown', 'may not', 'might not', 'bonus')) issues.push({ code: 'uncertainty_missing', priority: 3, title: 'Say how uncertain the extra orders are.', why: 'The 10–20 extra orders are Sam\'s guess, with no data behind it.', next: 'Say so in one sentence, and base the recommendation on something that holds either way.' });
+    if (words(final) > 200) issues.push({ code: 'final_too_long', priority: 5, title: `Your recommendation is ${words(final)} words; the limit is 200.`, why: 'Sam asked for a short recommendation.', next: 'Keep the decision, the key figures and the main caveat.' });
+  }
+  if (r.checks && !/\d/.test(r.checks)) issues.push({ code: 'checks_vague', priority: 4, title: 'Show the calculations you checked.', why: 'A check someone can repeat is evidence; "I checked it" is not.', next: 'Write out the key calculation.' });
+  if (r.explanation && words(r.explanation) < 40) issues.push({ code: 'explanation_thin', priority: 6, title: 'Explain your decisions in more detail.', why: 'The explanation shows your reasoning, which the final work alone can\'t.', next: 'Cover what you decided, what you used AI for, what you checked and what you changed.' });
+  if (r.explanation && words(r.explanation) > 150) issues.push({ code: 'explanation_too_long', priority: 7, title: `Your explanation is ${words(r.explanation)} words; the limit is 150.`, why: 'Concise is part of the task.', next: 'Keep the key decisions.' });
+  if (hasA && hasB && !extraOnly) strengths.push('Your recommendation compares both options on all online orders.');
+  if (criteria.length >= 3) strengths.push('Your plan sets out checkable criteria before the work.');
+  const verification = missing.includes('what you checked') || missing.includes('the final work') ? 0 : issues.some((i) => ['fees_extra_only', 'comparison_missing'].includes(i.code)) ? 1 : issues.some((i) => ['uncertainty_missing', 'checks_vague'].includes(i.code)) ? 2 : 3;
+  const taskDefinition = !r.plan ? 0 : criteria.length < 3 ? 1 : 3;
+  return { issues, strengths, evidenceChecks: [], metrics: { comparisonCorrect: hasA && hasB && !extraOnly }, provisional: { task_definition: clampSupport(taskDefinition, ctx), verification: clampSupport(verification, ctx) } };
 }

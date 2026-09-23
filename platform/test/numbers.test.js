@@ -142,7 +142,7 @@ test('workspace: dataset shown, AI request carries the dataset, feedback, revisi
   await e.login('edu@n.test');
   r = await e.get(`/app/courses/${S.courseId}/report.csv`);
   const row = r.text.split('\r\n').find((l) => l.includes('stu@n.test'));
-  assert.ok(row.endsWith(',growth,4/4,estimate'), row);
+  assert.ok(row.endsWith(',growth,4/4,estimate,'), row);
   assert.ok(row.includes(',true,'), row);
   r = await e.get(`/app/assignments/${S.aid}/review`);
   assert.match(r.text, /P: Limited support/); // revision after feedback caps at 2

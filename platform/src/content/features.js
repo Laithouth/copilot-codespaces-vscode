@@ -12,8 +12,7 @@ export const FEATURE_STATUS = {
 
 export const FEATURES = [
   { area: 'Learning', name: 'Public sample lesson (Module 4: Checking claims and sources)', status: 'tested', note: 'No account needed; nothing entered is saved.' },
-  { area: 'Learning', name: 'Modules 1, 2, 4 and 5 as assignable lessons', status: 'tested' },
-  { area: 'Learning', name: 'Modules 3, 6, 7 and 8', status: 'planned', note: 'Specified in the curriculum; not built.' },
+  { area: 'Learning', name: 'All eight modules as assignable lessons', status: 'tested', note: 'Content version 0.1; needs review by subject educators before a pilot.' },
   { area: 'Learning', name: 'Practice mode with recorded hints; assessment mode without hints', status: 'tested' },
   { area: 'Learning', name: 'Revision with every version preserved', status: 'tested' },
   { area: 'Learning', name: 'Provisional automated feedback (rule-based, one or two issues)', status: 'tested', note: 'Deterministic checks against each lesson\'s answer key; no AI grading.' },
