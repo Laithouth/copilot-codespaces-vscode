@@ -1,0 +1,10 @@
+# SYNTHETIC TEACHING DATA. Fictional company and figures, created for Module 5. Not real sales data.
+quarter,region,units_sold,gross_revenue_gbp,returns_gbp
+2025-Q1,North,1200,30000,900
+2025-Q2,North,1260,31500,1100
+2025-Q1,South,950,23750,400
+2025-Q2,South,1140,28500,450
+2025-Q1,East,1300,32500,3900
+2025-Q2,East,1330,,4200
+2025-Q1,West,800,20000,200
+2025-Q2,West,1000,25000,250

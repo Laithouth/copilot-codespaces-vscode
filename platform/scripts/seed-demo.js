@@ -41,6 +41,7 @@ tx(db, () => {
   add('choosing-suitable-tasks', 'Week 2: Is AI the right tool?', 'limited', 'practice');
   add('defining-a-useful-request', 'Week 3: Brief for Crumb & Co', 'permitted', 'practice');
   const evidence = add('checking-claims-and-sources', 'Week 4: Check before you forward', 'limited', 'practice');
+  add('working-with-numbers', 'Week 5: Where should the new rep go?', 'limited', 'practice');
 
   // One fictional submission so the review screens have something to show.
   const a = db.prepare('SELECT * FROM assignments WHERE id = ?').get(evidence);

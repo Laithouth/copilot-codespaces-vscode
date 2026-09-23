@@ -8,7 +8,7 @@
 | 2 | Defining a useful request | 75–90 min | **Built** | Task brief, initial prompt, evaluation, one revision, judgement | Task definition, Instruction quality, Revision |
 | 3 | Examples and structured outputs | 60–90 min | Specified | Checked structured result from a supplied source | Instruction quality, Verification |
 | 4 | Checking claims and sources | 60–90 min | **Built** (also the public sample) | Annotated answer, corrected answer, uncertainty statement | Verification, Revision, Responsible use |
-| 5 | Working with numbers and code | 60–90 min | Specified (materials ready) | Verified result and record of checks | Task definition, Verification |
+| 5 | Working with numbers and code | 60–90 min | **Built** | Definition, handling of the missing value, figures, an independent check, and a recommendation with limitations | Task definition, Verification, Responsible use |
 | 6 | Research and communication | 60–90 min | Specified | Short evidence-based brief | Instruction quality, Verification |
 | 7 | Responsible workflows | 60–75 min | Specified | Revised workflow with disclosure | Responsible use, Tool selection |
 | 8 | Independent application | 90–120 min | Specified | Final work, prompts, checks, revisions, explanation | All six |
@@ -63,18 +63,15 @@ Total: 8.5 hours (lower estimates) to 12 hours (upper estimates).
 - **Assessment:** claim verdicts against the key (C5 invented reference and C6 cost contradiction are critical); corrected answer checked for retained fabrication, misstated figures, causal overclaims and the omitted cost; uncertainty statement. Provisional level for *Verification* (capped at "substantial support" if the invented reference is accepted and "not yet" if it is kept in the answer; capped at "limited support" when hints or revisions were used). *Revision* credit depends on resolving the issues flagged last time.
 - **Complete lesson plan:** `/curriculum/sample-lesson`.
 
-## Module 5. Working with numbers and code (specified; materials ready)
+## Module 5. Working with numbers and code (built; the business analysis demonstration)
 
-- **Outcomes:** ask for formulas or small scripts and test them on known cases; recognise missing values, units and ambiguous definitions; reproduce a key calculation independently and record checks.
-- **Lesson:** AI can write a correct formula and still answer the wrong question. Clarify the definition before calculating, handle missing data explicitly, and check against a hand-calculated case.
-- **Worked example:** a formula for average order value, tested on three rows computed by hand.
-- **Student task:** the business analysis demonstration in [03-demonstration-activities.md](03-demonstration-activities.md): a synthetic sales dataset with a missing value and an ambiguous "top-performing region".
-- **Independent exercise:** a second small dataset (unit conversion from imperial to metric) with a planted unit error.
-- **Supplied materials:** [`materials/module5-sales-synthetic.csv`](materials/module5-sales-synthetic.csv) and a manager's one-line request.
-- **Example response and common mistakes:** in the demonstration document.
-- **Rubric:** *Task definition* (clarified objective and definition); *Verification* (missing value handled and disclosed, independent recalculation).
-- **Accessibility alternative:** the dataset is available as a plain table; calculations can be shown in any tool; spoken walk-through with the educator accepted.
-- **Instructor notes:** the three plausible definitions give three different "top" regions. That is the point: there is no single right answer until the objective is clarified.
+- **Lesson:** AI can write a correct formula and still answer the wrong question, or quietly treat a blank as zero. Four checks: **Definition, Data, Check, Limits.**
+- **Worked example:** an AI-suggested `=AVERAGE(B2:B20)` for average order value, tested on three rows worked out by hand; it gives revenue per row, not per order. The fix `=SUM(B)/SUM(C)` matches the hand calculation.
+- **Student task:** the business analysis demonstration in [03-demonstration-activities.md](03-demonstration-activities.md). The student clarifies what "top performer" means, finds and handles the missing East Q2 revenue, notices East's high returns, enters a figure per region for their chosen definition, recalculates one figure independently, and writes a recommendation of no more than 150 words with limitations. Optional AI step: ask the approved model for a formula or analysis (the dataset is attached, with the blank left blank), then test what it gives.
+- **Independent exercise (no hints):** an AI-suggested pounds-to-kilograms formula `=B2*2.2046` that multiplies instead of dividing. The student says whether it is correct, converts 10 lb (4.54 kg) and gives the right formula.
+- **Supplied materials:** Dataset D ([`materials/module5-sales-synthetic.csv`](materials/module5-sales-synthetic.csv), shown as an accessible table and downloadable) and the manager's note.
+- **Assessment:** any of the three definitions is accepted if it is stated and justified and the figures match it (±1% for revenue, ±0.6 points for growth). The checks flag, in priority order: blank counted as zero (caps verification at 0); missing value not found; leaving the quarter out; no definition or reason; wrong figures; top region inconsistent with the definition; no or wrong independent recalculation; returns missed; estimate not disclosed; no limitations; over 150 words. Provisional levels for *Task definition* and *Verification*; the educator judges *Responsible use*.
+- **Example response, common mistakes, accessibility alternative, instructor notes:** in `lessons.js` and on the educator's view.
 
 ## Module 6. Research and communication (specified)
 

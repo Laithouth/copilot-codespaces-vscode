@@ -4,7 +4,7 @@
 
 A platform that universities license to teach students how to do appropriate tasks with AI: **define the task, choose an appropriate tool, give useful instructions, evaluate the result, improve the approach, and explain their own contribution.** It includes the public website, a public sample lesson, and student, educator and administrator workspaces.
 
-> **Status: pilot prototype.** Three of eight modules are built. It is not ready for large institutional deployment, and it is not ready for a pilot with real students until the [launch blockers](docs/10-feature-status-and-launch.md#launch-blockers-before-the-first-pilot-with-real-students) are closed. The platform has no learning results yet.
+> **Status: pilot prototype.** Four of eight modules are built (1, 2, 4 and 5). It is not ready for large institutional deployment, and it is not ready for a pilot with real students until the [launch blockers](docs/10-feature-status-and-launch.md#launch-blockers-before-the-first-pilot-with-real-students) are closed. The platform has no learning results yet.
 
 ## Quick start
 
@@ -48,7 +48,7 @@ Institutions also need an approved provider and a monthly run limit above 0 (in 
 | Command | What it does |
 |---|---|
 | `npm start` / `npm run dev` | Run the server (`dev` restarts on file changes) |
-| `npm test` | 39 automated tests: critical journey, access boundaries, model failures, budgets, retention, deletion, export, feedback rules |
+| `npm test` | 53 automated tests: critical journey, access boundaries, model failures, budgets, retention, deletion, export, feedback rules |
 | `npm run test:a11y` | axe-core WCAG A/AA checks, 320 px reflow check and keyboard walkthrough in Chromium |
 | `npm run seed:demo` | Create the fictional demo institution |
 | `npm run create-institution` | Create an institution and invite its administrator |

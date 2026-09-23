@@ -5,6 +5,7 @@ import { lessonIntro, materials, aiAnswer, lessonFields, parseResponse, hintsBlo
 import { COMPETENCIES, LEVELS, levelLabel, competencyByCode } from '../content/competencies.js';
 import { providerAvailability, budgetState, runForAttempt, providerLabel } from '../ai.js';
 import { audit } from '../db.js';
+import { SALES_ROWS } from '../content/lessons.js';
 import {
   AI_POLICY, lessonFor, attemptsFor, getOrCreateDraft, saveDraft, startRevision, submitAttempt, feedbackForAttempt,
   modelRunsForAttempt, studentCanSeeFeedback, studentCanSeeExample, competencyProfile, isPastDue,
@@ -80,14 +81,19 @@ function aiPanel(ctx, { assignment, institution, lesson, attempt, readOnly }) {
   if (assignment.ai_policy === 'prohibited') return html`<div class="note"><p><strong>AI use is not permitted for this assignment,</strong> so the live AI step is switched off.${lesson.type === 'brief' ? ' Evaluate the example output in the lesson plan instead, or reason about what your prompt would produce.' : ''}</p></div>`;
   const avail = providerAvailability(institution);
   const budget = budgetState(ctx.db, institution);
-  const buttons = lesson.type === 'brief' ? [['run_v1', 'Run prompt version 1'], ['run_v2', 'Run prompt version 2']] : [['run_rewrite', 'Ask the AI to rewrite the answer from the sources']];
+  const buttons = lesson.type === 'brief' ? [['run_v1', 'Run prompt version 1'], ['run_v2', 'Run prompt version 2']]
+    : lesson.type === 'numbers' ? [['run_formula', 'Send to the AI (Dataset D is attached)']]
+      : [['run_rewrite', 'Ask the AI to rewrite the answer from the sources']];
+  const promptHelp = lesson.type === 'numbers'
+    ? ['Your request to the AI', 'For example: give me a spreadsheet formula for each region\'s Q1-to-Q2 growth. Dataset D is attached automatically.', 'Test what the AI gave you on a region you worked out by hand. What did you find?']
+    : ['Your instruction to the AI', 'For example: rewrite the answer using only Sources A–C and name the source for each claim. The sources are attached automatically.', 'Check the AI\'s rewrite: did it introduce any new problems?'];
   return html`<fieldset><legend>Live AI step</legend>
     <p class="small">Approved provider: ${providerLabel(institution.approved_provider)}${institution.approved_model ? `, model ${institution.approved_model}` : ''}. Runs are saved with the model name. Don't enter personal or confidential information.</p>
     <p class="small"><strong>Data rule from your institution:</strong> ${institution.permitted_data_note}</p>
-    ${lesson.type === 'evidence' ? html`<label for="ai_prompt">Your instruction to the AI</label>
-      <p class="hint-text">For example: rewrite the answer using only Sources A–C and name the source for each claim. The sources are attached automatically.</p>
+    ${lesson.type !== 'brief' ? html`<label for="ai_prompt">${promptHelp[0]}</label>
+      <p class="hint-text">${promptHelp[1]}</p>
       <textarea id="ai_prompt" name="ai_prompt" rows="4" data-dictate${readOnly ? raw(' disabled') : ''}>${attempt?.response.ai_prompt || ''}</textarea>
-      <label for="ai_review">Check the AI's rewrite: did it introduce any new problems?</label>
+      <label for="ai_review">${promptHelp[2]}</label>
       <textarea id="ai_review" name="ai_review" rows="3" data-dictate${readOnly ? raw(' disabled') : ''}>${attempt?.response.ai_review || ''}</textarea>` : ''}
     ${!avail.ok ? html`<p class="note"><strong>The live AI step isn't available:</strong> ${avail.reason} You can still complete the lesson, and you can record output from a tool your course approves below.</p>`
       : budget.exhausted ? html`<p class="note"><strong>Your institution has reached its monthly AI limit.</strong> You can still complete the lesson and record output from an approved tool.</p>`
@@ -95,7 +101,7 @@ function aiPanel(ctx, { assignment, institution, lesson, attempt, readOnly }) {
     ${!readOnly ? html`<details class="disclosure"><summary>Record output from another approved tool</summary>
       <div class="field"><label for="paste_tool">Tool and model (as shown by the tool)</label><input type="text" id="paste_tool" name="paste_tool"></div>
       <div class="field"><label for="paste_for">Which step is this for?</label><select id="paste_for" name="paste_for">
-        ${lesson.type === 'brief' ? html`<option value="prompt v1">Prompt version 1</option><option value="prompt v2">Prompt version 2</option>` : html`<option value="rewrite">Rewrite from sources</option>`}</select></div>
+        ${lesson.type === 'brief' ? html`<option value="prompt v1">Prompt version 1</option><option value="prompt v2">Prompt version 2</option>` : lesson.type === 'numbers' ? html`<option value="formula">Formula or analysis</option>` : html`<option value="rewrite">Rewrite from sources</option>`}</select></div>
       <div class="field"><label for="paste_output">Output</label><textarea id="paste_output" name="paste_output" rows="5"></textarea></div>
       <button class="secondary" type="submit" name="action" value="paste">Save recorded output</button></details>` : ''}
   </fieldset>`;
@@ -205,7 +211,7 @@ async function workspacePost(ctx) {
   if (!draft) return back('This version is already submitted. Start a new version to revise it.');
 
   const response = parseResponse(lesson, b);
-  if (lesson.type === 'evidence') {
+  if (lesson.type === 'evidence' || lesson.type === 'numbers') {
     response.ai_prompt = String(b.ai_prompt || '').slice(0, 8000);
     response.ai_review = String(b.ai_review || '').slice(0, 8000);
   }
@@ -226,7 +232,7 @@ async function workspacePost(ctx) {
     return back('Output recorded with the tool name you gave.');
   }
 
-  if (['run_v1', 'run_v2', 'run_rewrite'].includes(b.action)) {
+  if (['run_v1', 'run_v2', 'run_rewrite', 'run_formula'].includes(b.action)) {
     let prompt; let purpose;
     if (lesson.type === 'brief') {
       purpose = b.action === 'run_v2' ? 'prompt v2' : 'prompt v1';
@@ -236,6 +242,10 @@ async function workspacePost(ctx) {
       const sources = lesson.materials.map((m) => `<source id="${m.id}" title="${m.title}">\n${m.body}\n</source>`).join('\n');
       const answer = `${lesson.aiAnswerOpening} ${lesson.claims.map((c) => c.text).join(' ')}`;
       prompt = response.ai_prompt?.trim() ? `${response.ai_prompt}\n\n<answer_to_revise>\n${answer}\n</answer_to_revise>\n\n${sources}` : '';
+    } else if (lesson.type === 'numbers' && b.action === 'run_formula') {
+      purpose = 'formula';
+      const csv = ['quarter,region,units_sold,gross_revenue_gbp,returns_gbp', ...SALES_ROWS.map((r) => [r.quarter, r.region, r.units, r.gross ?? '', r.returns].join(','))].join('\n');
+      prompt = response.ai_prompt?.trim() ? `${response.ai_prompt}\n\n<dataset name="Dataset D" note="synthetic teaching data; spreadsheet columns A-E, header in row 1">\n${csv}\n</dataset>` : '';
     } else {
       return back('That action isn\'t available in this lesson.');
     }

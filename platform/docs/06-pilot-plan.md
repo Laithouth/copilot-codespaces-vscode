@@ -10,7 +10,7 @@ All numbers here are **planning assumptions**, to be agreed with the pilot insti
 | Learners | Roughly 50–150 adult students |
 | Staff | A small group of instructors (2–5) and one institutional contact |
 | Duration | Six to eight weeks of teaching, plus a delayed transfer check four to six weeks later |
-| Content | Modules 1, 2 and 4 (built), plus any modules completed and reviewed before the pilot starts |
+| Content | Modules 1, 2, 4 and 5 (built), plus any modules completed and reviewed before the pilot starts |
 | Mode | Practice mode for learning, assessment mode for pre, post and delayed tasks |
 
 ## Agree before starting

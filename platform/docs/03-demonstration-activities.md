@@ -5,10 +5,10 @@ Three complete activities. All materials are original and fictional. Intentional
 | Activity | Module | Status |
 |---|---|---|
 | A. Evidence checking | 4 | **Built end to end**: public sample at `/try` and assignable lesson |
-| B. Business analysis | 5 | Fully specified with dataset and answer key; not yet interactive |
+| B. Business analysis | 5 | **Built** as the Module 5 lesson |
 | C. Prompt improvement | 2 | **Built** as the Module 2 lesson, with both prompt versions kept |
 
-Following the brief, only one activity (A) is built as a stand-alone public demonstration before the catalogue expands.
+Activity A is the stand-alone public demonstration. B and C are built as course lessons.
 
 ---
 
@@ -38,7 +38,7 @@ Following the brief, only one activity (A) is built as a stand-alone public demo
 
 ---
 
-## B. Business analysis (specified; materials ready)
+## B. Business analysis (built as Module 5)
 
 **Scenario.** A (fictional) regional sales manager writes: *"Which region is our top performer this half-year? I need a recommendation for where to put our extra sales rep next quarter."*
 

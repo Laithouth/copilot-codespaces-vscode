@@ -9,6 +9,8 @@ const has = (s, ...needles) => {
   const t = String(s || '').toLowerCase();
   return needles.some((n) => t.includes(n.toLowerCase()));
 };
+import { salesFigures, REGIONS } from './content/lessons.js';
+
 const clampSupport = (level, { hintsUsed, versionNo }) =>
   hintsUsed > 0 || versionNo > 1 ? Math.min(level, 2) : level;
 
@@ -16,7 +18,7 @@ export const MAX_SHOWN = 2;
 
 export function evaluate(lesson, response, ctx = {}) {
   const context = { hintsUsed: 0, versionNo: 1, previousIssueCodes: [], ...ctx };
-  const fn = { evidence: evaluateEvidence, suitability: evaluateSuitability, brief: evaluateBrief }[lesson.type];
+  const fn = { evidence: evaluateEvidence, suitability: evaluateSuitability, brief: evaluateBrief, numbers: evaluateNumbers }[lesson.type];
   if (!fn) throw new Error(`No evaluator for lesson type ${lesson.type}`);
   const result = fn(lesson, response || {}, context);
   result.issues.sort((a, b) => a.priority - b.priority);
@@ -220,5 +222,100 @@ function evaluateBrief(lesson, r, ctx) {
     evidenceChecks: [],
     metrics: { criteriaCount: criteria.length, constraintsCarried },
     provisional: { task_definition: clampSupport(briefLevel, ctx), instruction_quality: clampSupport(promptLevel, ctx) },
+  };
+}
+
+// Accepts "£61,500", "61500", "25%", "25.0" and similar.
+export function parseNumber(v) {
+  const t = String(v ?? '').replace(/[£$,%\s]/g, '');
+  if (!/^-?\d+(\.\d+)?$/.test(t)) return null;
+  return Number(t);
+}
+
+function closeTo(actual, expected, metric) {
+  if (actual === null || expected === null || expected === undefined) return false;
+  return metric === 'growth' ? Math.abs(actual - expected) <= 0.6 : Math.abs(actual - expected) <= Math.max(50, Math.abs(expected) * 0.01);
+}
+
+function evaluateNumbers(lesson, r, ctx) {
+  const issues = [];
+  const strengths = [];
+  const metric = ['gross', 'net', 'growth'].includes(r.definition) ? r.definition : null;
+  const handling = r.handling || '';
+  const figures = salesFigures(handling === 'exclude' ? 'exclude' : 'estimate');
+  const values = Object.fromEntries(REGIONS.map((reg) => [reg, parseNumber(r.values?.[reg])]));
+  const recommendation = r.recommendation || '';
+
+  if (!r.definition || !handling || REGIONS.some((reg) => values[reg] === null) || !r.top_region || !recommendation.trim()) {
+    const missing = [!r.definition && 'a definition', !handling && 'how you handled the missing value', REGIONS.some((reg) => values[reg] === null) && 'a figure for every region', !r.top_region && 'the top region', !recommendation.trim() && 'the recommendation'].filter(Boolean);
+    issues.push({ code: 'numbers_incomplete', priority: 0, title: `Still needed: ${missing.join(', ')}.`, why: 'Each step depends on the one before; a recommendation without figures, or figures without a definition, can\'t be checked.', next: 'Complete the missing steps, then submit again.' });
+  }
+  const foundMissing = has(r.missing_row, 'east') && has(r.missing_row, 'q2', '2025-q2', 'second quarter', 'quarter 2');
+  // A gross total for East of about £32,500 without choosing "exclude" means the blank was counted as zero.
+  const impliedZero = handling !== 'exclude' && metric === 'gross' && closeTo(values.East, 32500, 'gross');
+  if (handling === 'zero' || impliedZero) {
+    issues.push({ code: 'missing_as_zero', priority: 1, title: 'The blank East Q2 revenue has been counted as zero.', why: 'A blank means the figure is unknown, not that East sold nothing. Counting it as zero makes East look as if its sales collapsed, which could send the rep to the wrong region.', next: 'Estimate the missing value from the other data (check the unit price in the other rows), or ask for the real figure, and say which you did.' });
+  } else if (!foundMissing) {
+    issues.push({ code: 'missing_not_found', priority: 1, title: 'Look again for a missing value before calculating.', why: 'One cell in the dataset is blank. Most spreadsheet functions quietly treat blanks as zero, so you need to spot it yourself.', next: 'Scan every row of Dataset D and name the row with the gap.' });
+  }
+  if (handling === 'exclude') {
+    issues.push({ code: 'exclude_bias', priority: 2, title: 'Leaving East\'s missing quarter out makes the comparison unfair.', why: 'East would then be compared on one quarter against the others\' two. Its totals would look half their real size, and its growth couldn\'t be calculated.', next: 'Estimate the missing figure (and say how), or ask for it, so all four regions are compared on the same basis.' });
+  }
+  if (!r.definition || !r.question?.trim() || words(r.definition_reason) < 8) {
+    issues.push({ code: 'definition_unstated', priority: 3, title: 'Say what "top performer" means here, and why.', why: 'Gross revenue, net revenue and growth each point to a different region. Without a stated definition, the answer can\'t be checked or trusted.', next: 'Write the question you would ask the manager, choose a definition, and give the reason from the manager\'s note.' });
+  }
+  let valuesCorrect = null;
+  if (metric && handling !== 'zero') {
+    const wrong = REGIONS.filter((reg) => values[reg] !== null && figures[reg][metric] !== null && !closeTo(values[reg], figures[reg][metric], metric));
+    valuesCorrect = REGIONS.filter((reg) => figures[reg][metric] !== null && closeTo(values[reg], figures[reg][metric], metric)).length;
+    if (wrong.length) {
+      issues.push({ code: 'values_wrong', priority: 4, title: `Check your ${metric === 'growth' ? 'growth' : `${metric} revenue`} figure${wrong.length > 1 ? 's' : ''} for ${wrong.join(', ')}.`, why: 'The figures don\'t match a recalculation from Dataset D under the definition and handling you chose.', next: metric === 'growth' ? 'Growth = (Q2 ÷ Q1 − 1) × 100. Recalculate one region by hand and compare.' : metric === 'net' ? 'Net = Q1 + Q2 gross revenue, minus both quarters\' returns. Recalculate one region by hand and compare.' : 'Gross = Q1 + Q2 revenue for the region. Recalculate one region by hand and compare.' });
+    }
+    const ranked = REGIONS.filter((reg) => figures[reg][metric] !== null).sort((a, b) => figures[b][metric] - figures[a][metric]);
+    if (r.top_region && ranked.length && r.top_region !== ranked[0]) {
+      issues.push({ code: 'top_inconsistent', priority: 5, title: `Your top region doesn't match your own definition.`, why: 'The recommendation has to follow from the measure you chose, or the reasoning falls apart.', next: 'Compare the four figures for your chosen measure again, and pick the region they support.' });
+    }
+    const checkRegion = REGIONS.includes(r.check_region) ? r.check_region : null;
+    const checkValue = parseNumber(r.check_value);
+    if (!checkRegion || checkValue === null || words(r.check_method) < 6 || !closeTo(checkValue, figures[checkRegion][metric], metric)) {
+      issues.push({ code: 'no_recalculation', priority: 6, title: checkRegion && checkValue !== null ? 'Your independent recalculation doesn\'t match the data.' : 'Recalculate one key figure yourself.', why: 'A figure you have checked a second way is one you can defend. This is also how you catch a formula that gives plausible-looking wrong answers.', next: 'Pick one region, work its figure out by hand from Dataset D, and write down how.' });
+    }
+  }
+  if (!has(`${r.other_issue} ${recommendation}`, 'return')) {
+    issues.push({ code: 'returns_missed', priority: 7, title: 'Look at the returns column.', why: 'One region\'s returns are far higher than the others\'. That changes how its revenue should be read.', next: 'Compare returns with gross revenue for each region.' });
+  }
+  if (['estimate', 'ask'].includes(handling) && recommendation.trim() && !has(recommendation, 'estimat', 'assum', 'missing', 'blank')) {
+    issues.push({ code: 'assumption_undisclosed', priority: 8, title: 'Your recommendation doesn\'t mention the estimated figure.', why: 'The manager should know that part of the result depends on an estimate you made.', next: 'Add one sentence saying what was missing and how you estimated it.' });
+  }
+  if (recommendation.trim() && !has(recommendation, 'limit', 'two quarters', 'only two', 'half-year only', 'margin', 'does not', 'doesn\'t', 'cannot', 'can\'t', 'not tell', 'caveat')) {
+    issues.push({ code: 'limitations_missing', priority: 9, title: 'State the limits of this analysis.', why: 'Two quarters of data with one estimated value is a thin basis for a hiring decision. Saying so is part of an honest recommendation.', next: 'Add what the data can\'t tell you (for example, the short period, costs or margins).' });
+  }
+  if (words(recommendation) > 150) {
+    issues.push({ code: 'too_long', priority: 10, title: `Your recommendation is ${words(recommendation)} words; the limit is 150.`, why: 'The manager asked for a recommendation, not a report.', next: 'Keep the decision, the key figure, the main caveat and the limits.' });
+  }
+
+  const ind = r.independent || {};
+  const kg = parseNumber(ind.kg);
+  const independentCorrect = ind.correct ? ind.correct === 'no' && kg !== null && Math.abs(kg - lesson.independent.expectedKg) <= 0.02 : null;
+
+  if (foundMissing && ['estimate', 'ask'].includes(handling)) strengths.push('You found the missing value and handled it openly.');
+  if (valuesCorrect === 4) strengths.push('All four figures match the data for your chosen definition.');
+  if (!issues.some((i) => i.code === 'no_recalculation') && metric) strengths.push('Your independent recalculation matches.');
+  if (independentCorrect) strengths.push('You caught the wrong conversion formula by testing it.');
+
+  const codes = new Set(issues.map((i) => i.code));
+  let verification;
+  if (codes.has('missing_as_zero') || codes.has('missing_not_found') || codes.has('numbers_incomplete')) verification = 0;
+  else if (codes.has('values_wrong') || codes.has('no_recalculation')) verification = 1;
+  else if (codes.has('returns_missed') || codes.has('exclude_bias') || codes.has('top_inconsistent') || independentCorrect === false) verification = 2;
+  else verification = 3;
+  const taskDefinition = codes.has('definition_unstated') ? (r.definition ? 1 : 0) : 3;
+
+  return {
+    issues,
+    strengths,
+    evidenceChecks: [],
+    metrics: { definition: r.definition || null, handling: handling || null, valuesCorrect, independentCorrect },
+    provisional: { task_definition: clampSupport(taskDefinition, ctx), verification: clampSupport(verification, ctx) },
   };
 }

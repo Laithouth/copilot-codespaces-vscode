@@ -182,7 +182,7 @@ function studentReview(ctx) {
     return html`<details class="disclosure"${a === attempts[attempts.length - 1] ? raw(' open') : ''}><summary>Version ${a.version_no} · ${a.status === 'submitted' ? `submitted ${a.submitted_at} UTC` : 'draft (not submitted)'} · hints ${a.hints_used}${a.dictation_used ? ' · speech input used' : ''}</summary>
       <p class="who student">Student's work</p>
       ${lessonFields(lesson, a.response, { readOnly: true })}
-      ${a.response.ai_prompt ? html`<p><strong>Instruction to AI:</strong> ${a.response.ai_prompt}</p><p><strong>Student's check of the AI rewrite:</strong> ${a.response.ai_review || '—'}</p>` : ''}
+      ${a.response.ai_prompt ? html`<p><strong>Instruction to AI:</strong> ${a.response.ai_prompt}</p><p><strong>Student's check of the AI output:</strong> ${a.response.ai_review || '—'}</p>` : ''}
       <p><strong>Disclosure:</strong> ${a.disclosure || '—'}</p>
       ${checks.length ? html`<div class="table-wrap" tabindex="0" role="region" aria-label="Table, scrolls sideways on small screens"><table><caption>Evidence checks against the answer key</caption><thead><tr><th scope="col">Claim</th><th scope="col">Student verdict</th><th scope="col">Source</th><th scope="col">Note</th><th scope="col">Matches key</th></tr></thead>
         <tbody>${checks.map((c) => html`<tr><th scope="row">${c.claim_key}</th><td>${VERDICT_LABEL(lesson, c.verdict)}</td><td>${c.source_ref || '—'}</td><td>${c.note || '—'}</td><td>${c.correct ? chip('Yes', 'good') : chip('No', 'bad')}</td></tr>`)}</tbody></table></div>` : ''}
@@ -351,7 +351,8 @@ export function courseReportCsv(db, course) {
   const assignments = db.prepare('SELECT * FROM assignments WHERE course_id = ? ORDER BY id').all(course.id);
   const students = courseStudents(db, course.id);
   const lines = [csvRow(['course', 'student_name', 'student_email', 'assignment', 'lesson', 'ai_policy', 'mode', 'versions_submitted', 'last_submitted_utc', 'hints_used', 'claims_correct_latest', 'independent_item_correct_latest',
-    ...COMPETENCIES.map((c) => `confirmed_${c.code}`), ...COMPETENCIES.map((c) => `provisional_${c.code}`)])];
+    ...COMPETENCIES.map((c) => `confirmed_${c.code}`), ...COMPETENCIES.map((c) => `provisional_${c.code}`),
+    'numbers_definition_latest', 'numbers_figures_correct_latest', 'numbers_missing_value_handling_latest'])];
   for (const a of assignments) {
     for (const s of students) {
       const attempts = attemptsFor(db, a.id, s.id);
@@ -364,9 +365,15 @@ export function courseReportCsv(db, course) {
         claims = `${checks.filter((c) => c.correct).length}/${checks.length}`;
         independent = last.response.independent?.verdict ? String(LESSONS[a.lesson_slug].independent.expected.includes(last.response.independent.verdict)) : '';
       }
+      let numbers = ['', '', ''];
+      if (last && LESSONS[a.lesson_slug].type === 'numbers') {
+        const m = feedbackForAttempt(db, last.id).find((f) => f.author_type === 'automated')?.body.metrics || {};
+        numbers = [m.definition || '', m.valuesCorrect === null || m.valuesCorrect === undefined ? '' : `${m.valuesCorrect}/4`, m.handling || ''];
+        independent = m.independentCorrect === null || m.independentCorrect === undefined ? '' : String(m.independentCorrect);
+      }
       lines.push(csvRow([course.code, s.name, s.email, a.title, LESSONS[a.lesson_slug].title, a.ai_policy, a.mode, submitted.length, last?.submitted_at || '', attempts.reduce((n, x) => n + x.hints_used, 0), claims, independent,
         ...COMPETENCIES.map((c) => (ass[c.code]?.status === 'final' ? ass[c.code].level : '')),
-        ...COMPETENCIES.map((c) => (ass[c.code]?.status === 'provisional' ? ass[c.code].provisional_level : ''))]));
+        ...COMPETENCIES.map((c) => (ass[c.code]?.status === 'provisional' ? ass[c.code].provisional_level : '')), ...numbers]));
     }
   }
   return lines.join('\r\n') + '\r\n';

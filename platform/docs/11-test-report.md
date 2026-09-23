@@ -5,7 +5,7 @@ Date: 23 September 2026. Environment: Node.js 22.22, SQLite 3.51 (`node:sqlite`)
 ## How to run
 
 ```bash
-npm test            # 39 automated tests (node:test)
+npm test            # 53 automated tests (node:test)
 npm run test:a11y   # browser accessibility checks (needs Chromium; set CHROMIUM_PATH if not on PATH)
 ```
 
@@ -17,8 +17,9 @@ npm run test:a11y   # browser accessibility checks (needs Chromium; set CHROMIUM
 | `test/journey.test.js`: critical journey, assessment mode, deadlines | 3 | Pass |
 | `test/access.test.js`: access boundaries and security basics | 10 | Pass |
 | `test/ai-and-data.test.js`: model failures, budgets, retention, deletion, contact, stateless sample | 13 | Pass |
-| **Total** | **39** | **39 pass, 0 fail** |
-| `scripts/a11y-check.js`: axe WCAG 2.0/2.1/2.2 A+AA and 320 px reflow | 108 page states | 108 pass |
+| `test/numbers.test.js`: Module 5 feedback rules and workspace flow | 14 | Pass |
+| **Total** | **53** | **53 pass, 0 fail** |
+| `scripts/a11y-check.js`: axe WCAG 2.0/2.1/2.2 A+AA and 320 px reflow | 112 page states | 112 pass |
 | `scripts/a11y-check.js`: keyboard-only sample lesson | 1 walkthrough | Pass |
 
 ## What was tested
@@ -36,7 +37,9 @@ Also: assessment mode (no hints, even with a forged hint request; feedback hidde
 
 **Feedback rules** (`feedback.test.js`): fully correct and example answers produce no issues; priority order (invented reference first); at most two issues shown; keeping the invented figure caps at level 0 and accepting it caps at level 1; hints and revisions cap at level 2; revision credit depends on resolving the issues shown; saying a figure was removed is not flagged; a correction of the 16% figure is not flagged, while "caused" is; suitability and brief examples pass; **a long generic prompt is not rewarded**.
 
-**Accessibility** (`a11y-check.js`): axe-core with WCAG 2.0, 2.1 and 2.2 A and AA tags on 15 public pages, the sample lesson after submission, and the student, educator and administrator workspace pages, in light and dark colour schemes at 1280 px and 320 px width (108 page states). There is no horizontal scrolling at 320 px. Keyboard-only: the skip link is the first tab stop, a claim verdict can be chosen with arrow keys, submit is reachable, focus moves to the feedback after submitting, and focus is visible throughout. Problems found and fixed during testing: scrollable tables were not keyboard-focusable; several pages overflowed at 320 px; long status labels didn't wrap; and the page gutter was zero on phones.
+**Module 5** (`numbers.test.js`): the answer key gives three different top regions for the three definitions; the example response passes with top levels; each accepted definition passes when its figures match; number parsing (£, commas, %); blank-as-zero is flagged first (explicitly, or implied by an East gross total of £32,500) and caps verification at 0; leaving the quarter out, wrong figures, an inconsistent top region, a failed recalculation, missed returns, an undisclosed estimate, missing limitations and over-length recommendations are flagged; the independent formula item; hint capping. Over HTTP: the dataset renders with the blank as an empty cell; the AI request carries the dataset with the blank still blank; blank-as-zero feedback, revision with resolved issues, the answer key after submission; course CSV columns for definition, figures correct and handling; the CSV download.
+
+**Accessibility** (`a11y-check.js`): axe-core with WCAG 2.0, 2.1 and 2.2 A and AA tags on 15 public pages, the sample lesson after submission, and the student, educator and administrator workspace pages, in light and dark colour schemes at 1280 px and 320 px width (112 page states). There is no horizontal scrolling at 320 px. Keyboard-only: the skip link is the first tab stop, a claim verdict can be chosen with arrow keys, submit is reachable, focus moves to the feedback after submitting, and focus is visible throughout. Problems found and fixed during testing: in Module 5, the hint's example figures were real answers and the table caption announced the blank cell (both removed); scrollable tables were not keyboard-focusable; several pages overflowed at 320 px; long status labels didn't wrap; and the page gutter was zero on phones.
 
 **Checked by hand** (not automated): the backup was restored and the app ran from it (row counts matched, integrity check ok); the Anthropic adapter's request shape and response handling against a local stub server; screenshots of the home page, sample lesson, student workspace and educator review at desktop and phone widths.
 

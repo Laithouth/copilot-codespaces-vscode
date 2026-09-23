@@ -83,7 +83,8 @@ export const MODULES = [
   {
     no: 5,
     title: 'Working with numbers and code',
-    status: 'specified',
+    status: 'available',
+    lesson: 'working-with-numbers',
     time: '60–90 min',
     prerequisites: 'Modules 2 and 4. Basic spreadsheet use.',
     outcomes: [
@@ -93,8 +94,8 @@ export const MODULES = [
     ],
     taskExample: 'Clarify what "top-performing region" means in a small synthetic sales dataset with a missing value, then analyse and check it.',
     deliverable: 'A verified result, a record of checks, and a short recommendation with limitations.',
-    assessment: ['Correct handling of the missing value and definition', 'Independent recalculation', 'Verification criterion'],
-    competencies: ['task_definition', 'verification'],
+    assessment: ['Definition stated and justified; figures checked against the data for that definition', 'Missing value found and handled openly', 'Independent recalculation and a formula tested on a known case (no hints)', 'Task definition and Verification criteria (provisional automated levels, educator-confirmed)'],
+    competencies: ['task_definition', 'verification', 'responsible_use'],
   },
   {
     no: 6,

@@ -144,7 +144,7 @@ function curriculum(ctx) {
     <h1>Curriculum</h1>
     <p class="lead">${COURSE.title}. ${COURSE.hours}.</p>
     <p><strong>Audience:</strong> ${COURSE.audience} First examples use business and general academic tasks; the structure is designed to be adapted to other disciplines.</p>
-    <div class="note info"><p><strong>What is available now.</strong> Modules 1, 2 and 4 are built for the pilot. The other five are specified below but not yet built, and we won't sell the full course until they are.</p></div>
+    <div class="note info"><p><strong>What is available now.</strong> Modules 1, 2, 4 and 5 are built for the pilot. The other four are specified below but not yet built, and we won't sell the full course until they are.</p></div>
 
     <h2>The eight modules</h2>
     <div class="grid">${MODULES.map(moduleCard)}</div>
@@ -251,8 +251,8 @@ function institutions(ctx) {
     <h2>Course delivery</h2>
     <ul class="plain">
       ${row('Lecturers assign lessons inside their own course, with deadlines and course-specific instructions.', 'Assignments with AI-use rules')}
-      ${row('Three modules (1, 2 and 4) available now; five more specified.', 'Modules 1, 2 and 4')}
-      ${row('Five further modules.', 'Modules 3, 5')}
+      ${row('Four modules (1, 2, 4 and 5) available now; four more specified.', 'Modules 1, 2, 4 and 5')}
+      ${row('Four further modules.', 'Modules 3, 6')}
       ${row('Launch from your learning management system (LTI 1.3).', 'LMS integration')}
     </ul>
 
@@ -352,7 +352,7 @@ function research(ctx) {
 function plans(ctx) {
   const tiers = [
     ['Individual access', 'Not offered at present.', ['The first release is designed for course delivery. We may offer individual access later.'], null],
-    ['Course pilot', 'Fixed scope, paid. About 6–8 weeks.', ['One department, one or more courses', 'Modules 1, 2 and 4, plus modules completed during the pilot', 'Educator workspace, reports and roster import', 'Agreed model-run allowance with alerts', 'Onboarding session and named pilot contact', 'Evaluation plan and a written pilot report'], 'Request a pilot quote'],
+    ['Course pilot', 'Fixed scope, paid. About 6–8 weeks.', ['One department, one or more courses', 'Modules 1, 2, 4 and 5, plus modules completed during the pilot', 'Educator workspace, reports and roster import', 'Agreed model-run allowance with alerts', 'Onboarding session and named pilot contact', 'Evaluation plan and a written pilot report'], 'Request a pilot quote'],
     ['Department licence', 'Annual, after a successful pilot.', ['All available modules for one department', 'Defined learner numbers and model-run allowance', 'Educator onboarding and support as agreed', 'Content maintenance and dated tool guidance'], 'Request a quote'],
     ['Institution licence', 'Annual.', ['Multiple departments with central administration', 'Institution policies, retention and reporting', 'Single sign-on and LMS integration once built and tested with your systems', 'Support terms agreed in the contract'], 'Request a quote'],
   ];
